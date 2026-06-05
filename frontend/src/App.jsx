@@ -39,7 +39,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-full flex flex-col justify-between max-w-md mx-auto relative bg-brand-bg min-h-screen">
+    <div className="h-full flex flex-col justify-between max-w-lg mx-auto relative bg-brand-bg min-h-screen">
       {/* Asosiy Kontent oqimi */}
       <div className="flex-1 overflow-y-auto pb-28">
         <div className="animate-fade-in">
@@ -48,7 +48,7 @@ export default function App() {
       </div>
 
       {/* Floating Premium Bottom Tab Bar */}
-      <div className="fixed bottom-6 left-4 right-4 z-40 bg-slate-950/65 backdrop-blur-xl border border-slate-800/40 px-3 py-2.5 flex justify-around items-center max-w-sm mx-auto rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+      <div className="fixed bottom-6 left-4 right-4 z-40 bg-slate-950/65 backdrop-blur-xl border border-slate-800/40 px-3 py-2.5 flex justify-around items-center max-w-md mx-auto rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
         {/* Dashboard */}
         <button
           onClick={() => setActiveTab('home')}
