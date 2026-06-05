@@ -8,18 +8,18 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: '#0a0d16',        // Lighter, richer dark slate background
-          card: 'rgba(30, 41, 59, 0.55)', // Brighter, more solid glass card backdrop
-          primary: '#00e5ff',   // Vibrant Neon Cyan
-          primaryGlow: 'rgba(0, 229, 255, 0.35)',
-          success: '#05ffb0',   // Vibrant Neon Emerald
-          successGlow: 'rgba(5, 255, 176, 0.35)',
-          warning: '#ffbb00',   // Lighter Gold / Orange warning
-          warningGlow: 'rgba(255, 187, 0, 0.35)',
-          danger: '#ff1a8c',    // Brighter Electric Rose
-          dangerGlow: 'rgba(255, 26, 140, 0.35)',
-          text: '#ffffff',      // Crisp pure white text
-          muted: '#cbd5e1'      // Brighter Slate 300 for high-contrast reading
+          bg: 'var(--color-bg)',        // CSS Variable
+          card: 'var(--color-card)',    // CSS Variable
+          primary: 'var(--color-primary)', // CSS Variable
+          primaryGlow: 'var(--color-primary-glow)',
+          success: 'var(--color-success)', // CSS Variable
+          successGlow: 'var(--color-success-glow)',
+          warning: 'var(--color-warning)', // CSS Variable
+          warningGlow: 'var(--color-warning-glow)',
+          danger: 'var(--color-danger)',   // CSS Variable
+          dangerGlow: 'var(--color-danger-glow)',
+          text: 'var(--color-text)',       // CSS Variable
+          muted: 'var(--color-muted)'      // CSS Variable
         }
       },
       fontFamily: {
