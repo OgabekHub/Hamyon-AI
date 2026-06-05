@@ -1,46 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { Plus, Edit2, Trash2, Calendar, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, ArrowRight, X, TrendingDown, Wallet2 } from 'lucide-react';
 
 const CATEGORIES = [
-  { name: '🛒 Oziq-ovqat', color: '#05ffb0' }, // success (neon emerald)
-  { name: '🚗 Transport', color: '#00e5ff' }, // primary (neon cyan)
-  { name: '🍕 Restoran', color: '#ffaa00' },   // warning (neon gold)
-  { name: '💊 Sog\'liq', color: '#ff007f' },   // rose (electric rose)
-  { name: '🏠 Maishiy', color: '#a855f7' },    // purple
-  { name: '💡 Kommunal', color: '#eab308' },   // yellow
-  { name: '🎯 Boshqa', color: '#64748b' }      // slate
+  { name: '🛒 Oziq-ovqat', color: '#10b981' },
+  { name: '🚗 Transport',  color: '#3b9ef8' },
+  { name: '🍕 Restoran',   color: '#f59e0b' },
+  { name: '💊 Sog\'liq',  color: '#f43f5e' },
+  { name: '🏠 Maishiy',   color: '#a78bfa' },
+  { name: '💡 Kommunal',  color: '#fbbf24' },
+  { name: '🎯 Boshqa',    color: '#64748b' },
 ];
+
+function fmt(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`;
+  return String(n);
+}
 
 export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
   const [transactions, setTransactions] = useState([]);
-  const [userData, setUserData] = useState(user);
-  const [loading, setLoading] = useState(true);
+  const [userData, setUserData]         = useState(user);
+  const [loading, setLoading]           = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
 
-  // Form states
-  const [amount, setAmount] = useState('');
-  const [merchant, setMerchant] = useState('');
-  const [category, setCategory] = useState(CATEGORIES[0].name);
+  const [amount,    setAmount]    = useState('');
+  const [merchant,  setMerchant]  = useState('');
+  const [category,  setCategory]  = useState(CATEGORIES[0].name);
   const [newBudget, setNewBudget] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [txs, profile] = await Promise.all([
         fetchWithAuth('/api/transactions'),
-        fetchWithAuth('/api/auth')
+        fetchWithAuth('/api/auth'),
       ]);
       setTransactions(txs);
       setUserData(profile);
       setNewBudget(profile.monthly_budget || '');
     } catch (err) {
-      console.error('Ma\'lumot yuklashda xatolik:', err);
+      console.error('Yuklash xatoligi:', err);
     } finally {
       setLoading(false);
     }
@@ -49,256 +52,275 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return;
-
     try {
-      const payload = {
-        amount: parseFloat(amount),
-        merchant,
-        category,
-        date: new Date().toISOString()
-      };
       await fetchWithAuth('/api/transactions', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ amount: parseFloat(amount), merchant, category, date: new Date().toISOString() }),
       });
       setShowAddModal(false);
-      setAmount('');
-      setMerchant('');
-      setCategory(CATEGORIES[0].name);
+      setAmount(''); setMerchant(''); setCategory(CATEGORIES[0].name);
       loadData();
-    } catch (err) {
-      console.error('Qo\'shishda xatolik:', err);
-      alert('Tranzaksiya qo\'shib bo\'lmadi');
-    }
+    } catch { alert("Qo'shib bo'lmadi"); }
   };
 
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
     try {
-      const budgetVal = parseFloat(newBudget) || 0;
       await fetchWithAuth('/api/user/budget', {
         method: 'POST',
-        body: JSON.stringify({ monthly_budget: budgetVal })
+        body: JSON.stringify({ monthly_budget: parseFloat(newBudget) || 0 }),
       });
       setShowBudgetModal(false);
       loadData();
-    } catch (err) {
-      console.error('Budjetni saqlashda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleDeleteTransaction = async (id) => {
-    if (!confirm('Ushbu tranzaksiyani o\'chirmoqchimisiz?')) return;
+    if (!confirm("O'chirilsinmi?")) return;
     try {
-      await fetchWithAuth(`/api/transactions/${id}`, {
-        method: 'DELETE'
-      });
+      await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
       loadData();
-    } catch (err) {
-      console.error('O\'chirishda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // Joriy oydagi tranzaksiyalar filteri
+  // Calculations
   const currentMonthStr = new Date().toISOString().substring(0, 7);
-  const monthlyTxs = transactions.filter(t => t.date.substring(0, 7) === currentMonthStr);
-  const totalSpent = monthlyTxs.reduce((sum, t) => sum + Number(t.amount), 0);
+  const monthlyTxs      = transactions.filter(t => t.date.substring(0, 7) === currentMonthStr);
+  const totalSpent      = monthlyTxs.reduce((s, t) => s + Number(t.amount), 0);
+  const budgetLimit     = Number(userData?.monthly_budget || 0);
+  const percentSpent    = budgetLimit > 0 ? (totalSpent / budgetLimit) * 100 : 0;
+  const remaining       = Math.max(0, budgetLimit - totalSpent);
 
-  // Recharts uchun ma'lumot tayyorlash
   const categoryTotals = {};
   monthlyTxs.forEach(t => {
     categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Number(t.amount);
   });
-
   const chartData = Object.entries(categoryTotals).map(([name, value]) => {
-    const catObj = CATEGORIES.find(c => c.name === name) || { color: '#64748b' };
-    return { name, value, color: catObj.color };
+    const cat = CATEGORIES.find(c => c.name === name) || { color: '#64748b' };
+    return { name, value, color: cat.color };
   });
 
-  const budgetLimit = Number(userData?.monthly_budget || 0);
-  const percentSpent = budgetLimit > 0 ? (totalSpent / budgetLimit) * 100 : 0;
-  const remainingBudget = Math.max(0, budgetLimit - totalSpent);
+  const progressColor = percentSpent > 100 ? '#f43f5e' : percentSpent > 80 ? '#f59e0b' : '#10b981';
 
   return (
-    <div className="pb-24 px-4 pt-5 animate-fade-in">
-      {/* Profil Salomi */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="pb-28 px-4 pt-5 animate-fade-in">
+
+      {/* ── Top row: greeting + add button ── */}
+      <div className="flex justify-between items-center mb-5">
         <div>
-          <span className="text-brand-muted text-xs font-medium uppercase tracking-wider block">Xush kelibsiz,</span>
-          <h2 className="text-xl font-extrabold text-brand-text tracking-tight">{userData?.name || 'Jasur'} 👋</h2>
+          <span className="text-[10px] font-semibold uppercase tracking-widest block mb-0.5"
+            style={{ color: 'var(--color-muted)' }}>
+            Xush kelibsiz,
+          </span>
+          <h2 className="text-xl font-extrabold tracking-tight"
+            style={{ color: 'var(--color-text)' }}>
+            {userData?.name || 'Foydalanuvchi'} 👋
+          </h2>
         </div>
-        <button 
+        <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-bold px-4 py-2.5 rounded-2xl shadow-[0_0_15px_rgba(0,229,255,0.3)] hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider"
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider text-white btn-primary"
         >
-          <Plus size={16} strokeWidth={2.5} /> Qo'shish
+          <Plus size={15} strokeWidth={2.5} /> Qo'shish
         </button>
       </div>
 
-      {/* Moliya Kartasi (Neon glass) */}
-      <div className="glass glass-glow-primary rounded-3xl p-6 mb-6 flex flex-col gap-4 relative overflow-hidden shadow-2xl">
-        <div className="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 rounded-full blur-2xl pointer-events-none"></div>
-        
-        <div className="flex justify-between items-start z-10">
+      {/* ── HERO CARD: gradient navy→blue ── */}
+      <div className="hero-card rounded-3xl p-6 mb-5 shadow-[0_12px_40px_rgba(13,27,75,0.50)]">
+        {/* Top row */}
+        <div className="flex justify-between items-start mb-1 relative z-10">
           <div>
-            <span className="text-brand-muted text-[10px] font-bold uppercase tracking-widest block mb-1">Bu oygi jami xarajat</span>
-            <span className="text-3xl font-black text-brand-text tracking-tight">
-              {totalSpent.toLocaleString('uz-UZ')} <span className="text-brand-primary text-base font-bold">UZS</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200/70 block mb-1">
+              Bu oygi jami xarajat
             </span>
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-black text-white tracking-tight">
+                {totalSpent.toLocaleString('uz-UZ')}
+              </span>
+              <span className="text-sm font-bold text-blue-200 mb-0.5">UZS</span>
+            </div>
           </div>
-          <button 
+          <button
             onClick={() => setShowBudgetModal(true)}
-            className="p-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-800/40 rounded-xl transition-all duration-200 text-brand-primary"
+            className="p-2 rounded-xl transition-all duration-200 active:scale-90"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
             title="Budjetni tahrirlash"
           >
-            <Edit2 size={15} />
+            <Edit2 size={14} className="text-white" />
           </button>
         </div>
 
+        {/* Progress / Budget */}
         {budgetLimit > 0 ? (
-          <div className="z-10 mt-1">
-            <div className="flex justify-between text-xs font-medium text-brand-muted mb-1.5">
-              <span>Oylik limit: {budgetLimit.toLocaleString('uz-UZ')} UZS</span>
-              <span className={percentSpent > 100 ? 'text-brand-danger font-bold' : percentSpent > 80 ? 'text-brand-warning font-bold' : 'text-brand-success font-bold'}>
+          <div className="relative z-10 mt-4">
+            <div className="flex justify-between text-[11px] font-medium mb-2 text-blue-100/70">
+              <span>Limit: {budgetLimit.toLocaleString('uz-UZ')} UZS</span>
+              <span style={{ color: progressColor === '#10b981' ? '#6ee7b7' : progressColor === '#f59e0b' ? '#fcd34d' : '#fca5a5' }}>
                 {percentSpent.toFixed(1)}%
               </span>
             </div>
             {/* Progress bar */}
-            <div className="w-full bg-slate-950/80 rounded-full h-3 overflow-hidden p-[2px] border border-slate-900">
-              <div 
-                className={`h-full rounded-full transition-all duration-700 ease-out ${
-                  percentSpent > 100 
-                    ? 'bg-gradient-to-r from-brand-danger to-rose-400' 
-                    : percentSpent > 80 
-                      ? 'bg-gradient-to-r from-brand-warning to-yellow-300' 
-                      : 'bg-gradient-to-r from-brand-success to-emerald-300'
-                }`}
-                style={{ width: `${Math.min(100, percentSpent)}%` }}
-              ></div>
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
+              <div
+                className="h-full rounded-full relative overflow-hidden transition-all duration-700 ease-out"
+                style={{ width: `${Math.min(100, percentSpent)}%`, background: progressColor }}
+              >
+                <div className="absolute inset-0 progress-shimmer" />
+              </div>
             </div>
-            <div className="flex justify-between text-xs text-brand-muted mt-2.5">
-              <span>{percentSpent > 100 ? 'Budjet oshib ketdi!' : 'Qoldiq budjet:'}</span>
-              <span className={`font-bold ${percentSpent > 100 ? 'text-brand-danger' : 'text-brand-text'}`}>
-                {percentSpent > 100 
+            <div className="flex justify-between text-[10px] text-blue-200/60 mt-1.5">
+              <span>{percentSpent > 100 ? 'Budjet oshib ketdi!' : 'Qoldiq:'}</span>
+              <span className="font-bold text-white">
+                {percentSpent > 100
                   ? `-${(totalSpent - budgetLimit).toLocaleString('uz-UZ')} UZS`
-                  : `${remainingBudget.toLocaleString('uz-UZ')} UZS`
-                }
+                  : `${remaining.toLocaleString('uz-UZ')} UZS`}
               </span>
             </div>
           </div>
         ) : (
-          <div className="bg-slate-950/50 border border-slate-900 rounded-2xl p-4 flex justify-between items-center text-xs z-10">
-            <span className="text-brand-muted">Oylik budjet limiti belgilanmagan.</span>
-            <button 
+          <div className="relative z-10 mt-4 rounded-2xl px-4 py-3 flex justify-between items-center text-xs"
+            style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)' }}>
+            <span className="text-blue-100/70">Oylik budjet belgilanmagan</span>
+            <button
               onClick={() => setShowBudgetModal(true)}
-              className="text-brand-primary font-bold hover:underline transition-all"
+              className="font-bold text-white underline"
             >
-              Limit belgilash
+              Belgilash
             </button>
           </div>
         )}
+
+        {/* Small decorative wallet icon */}
+        <div className="absolute bottom-4 right-5 opacity-10 pointer-events-none">
+          <Wallet2 size={64} className="text-white" />
+        </div>
       </div>
 
-      {/* Chart Bo'limi */}
-      {monthlyTxs.length > 0 && (
-        <div className="glass rounded-3xl p-5 mb-6">
-          <h3 className="font-bold text-[10px] text-brand-muted uppercase tracking-widest mb-4">Toifalar bo'yicha tahlil</h3>
-          <div className="flex items-center gap-4 justify-between">
-            {/* Recharts Pie Chart in a relative container for center labels */}
-            <div className="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
+      {/* ── Pie Chart ── */}
+      {chartData.length > 0 && (
+        <div className="glass rounded-3xl p-5 mb-5">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4"
+            style={{ color: 'var(--color-muted)' }}>
+            Toifalar bo'yicha tahlil
+          </h3>
+          <div className="flex items-center gap-4">
+            {/* Donut chart */}
+            <div className="relative w-[120px] h-[120px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={60}
-                    paddingAngle={3}
+                    cx="50%" cy="50%"
+                    innerRadius={38} outerRadius={55}
+                    paddingAngle={4}
                     dataKey="value"
+                    strokeWidth={0}
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {chartData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value) => [`${value.toLocaleString('uz-UZ')} UZS`]}
-                    contentStyle={{ background: '#090d16', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px' }}
+                  <Tooltip
+                    formatter={v => [`${v.toLocaleString('uz-UZ')} UZS`]}
+                    contentStyle={{
+                      background: 'rgba(7,12,26,0.95)',
+                      border: '1px solid rgba(59,158,248,0.25)',
+                      borderRadius: '12px',
+                      color: '#e8f0ff',
+                      fontSize: '11px',
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute flex flex-col items-center justify-center pointer-events-none text-center">
-                <span className="text-[9px] uppercase text-brand-muted tracking-wider">Jami</span>
-                <span className="text-xs font-black text-brand-text truncate max-w-[85px]">
-                  {totalSpent >= 1000000 
-                    ? `${(totalSpent / 1000000).toFixed(1)}M` 
-                    : totalSpent >= 1000 
-                      ? `${(totalSpent / 1000).toFixed(0)}K` 
-                      : totalSpent}
-                </span>
+              {/* Center label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>Jami</span>
+                <span className="text-xs font-black" style={{ color: 'var(--color-text)' }}>{fmt(totalSpent)}</span>
               </div>
             </div>
 
-            {/* Ranglar/Legend */}
-            <div className="flex-1 flex flex-col gap-2 max-h-[130px] overflow-y-auto pr-1">
-              {chartData.map((d, i) => {
-                const percent = ((d.value / totalSpent) * 100).toFixed(0);
-                return (
-                  <div key={i} className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-2 text-brand-muted truncate">
-                      <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-[0_0_8px_currentColor]" style={{ backgroundColor: d.color, color: d.color }}></span>
-                      <span className="truncate text-[11px] font-medium">{d.name}</span>
-                    </div>
-                    <span className="font-bold text-brand-text text-right text-[11px]">{percent}%</span>
+            {/* Legend */}
+            <div className="flex-1 flex flex-col gap-1.5 max-h-[130px] overflow-y-auto pr-1 scrollbar-none">
+              {chartData.map((d, i) => (
+                <div key={i} className="flex justify-between items-center text-[11px]">
+                  <div className="flex items-center gap-2" style={{ color: 'var(--color-muted)' }}>
+                    <span className="w-2 h-2 rounded-full shrink-0 shadow-md"
+                      style={{ background: d.color, boxShadow: `0 0 6px ${d.color}` }} />
+                    <span className="truncate max-w-[90px]">{d.name}</span>
                   </div>
-                );
-              })}
+                  <span className="font-bold" style={{ color: 'var(--color-text)' }}>
+                    {((d.value / totalSpent) * 100).toFixed(0)}%
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* So'nggi Tranzaksiyalar */}
+      {/* ── Recent Transactions ── */}
       <div>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-[10px] text-brand-muted uppercase tracking-widest">So'nggi xarajatlar</h3>
-          <button 
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
+            So'nggi xarajatlar
+          </h3>
+          <button
             onClick={() => setActiveTab('transactions')}
-            className="text-xs font-bold text-brand-primary flex items-center gap-0.5 hover:underline"
+            className="text-xs font-bold flex items-center gap-0.5"
+            style={{ color: 'var(--color-primary)' }}
           >
-            Barchasi <ArrowRight size={12} />
+            Barchasi <ArrowRight size={11} />
           </button>
         </div>
 
         {transactions.length === 0 ? (
-          <div className="glass rounded-3xl p-10 text-center text-brand-muted text-sm border border-dashed border-slate-800/80">
-            📭 Hali xarajatlar mavjud emas.<br/>
+          <div className="glass rounded-3xl p-10 text-center text-sm border-dashed"
+            style={{
+              color: 'var(--color-muted)',
+              borderColor: 'rgba(59,158,248,0.15)',
+            }}>
+            <TrendingDown size={36} className="mx-auto mb-3 opacity-30" />
+            Hali xarajatlar mavjud emas.<br />
             SMS-larni botga yuboring yoki qo'lda qo'shing.
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {transactions.slice(0, 4).map((t) => (
-              <div key={t.id} className="glass hover:bg-slate-900/40 border border-slate-950 hover:border-slate-800/30 rounded-2xl p-4 flex justify-between items-center transition-all duration-300 transform hover:-translate-y-0.5 shadow-md">
+          <div className="flex flex-col gap-2.5">
+            {transactions.slice(0, 5).map(t => (
+              <div
+                key={t.id}
+                className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center transition-all duration-200 hover:-translate-y-0.5 active:scale-98"
+                style={{ borderColor: 'rgba(59,158,248,0.10)' }}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800/40 flex items-center justify-center text-lg shadow-inner">
+                  {/* Category emoji badge */}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+                    style={{ background: 'rgba(30,99,245,0.10)', border: '1px solid rgba(59,158,248,0.15)' }}>
                     {t.category.substring(0, 2)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-brand-text truncate max-w-[150px]">{t.merchant}</h4>
-                    <span className="text-[10px] text-brand-muted block mt-0.5">
-                      {new Date(t.date).toLocaleDateString('uz-UZ')} • {t.category.substring(3)}
-                    </span>
+                    <p className="font-bold text-sm truncate max-w-[140px]"
+                      style={{ color: 'var(--color-text)' }}>{t.merchant}</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                      {new Date(t.date).toLocaleDateString('uz-UZ')} · {t.category.substring(3)}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-sm text-brand-text">
-                    -{Number(t.amount).toLocaleString('uz-UZ')} UZS
+                <div className="flex items-center gap-2.5">
+                  <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
+                    -{Number(t.amount).toLocaleString('uz-UZ')}
                   </span>
-                  <button 
+                  <button
                     onClick={() => handleDeleteTransaction(t.id)}
-                    className="p-2 bg-slate-950/80 hover:bg-brand-danger/10 text-brand-muted hover:text-brand-danger border border-slate-850 rounded-xl transition-all duration-200"
+                    className="p-1.5 rounded-lg transition-all duration-200"
+                    style={{
+                      color: 'var(--color-muted)',
+                      background: 'rgba(244,63,94,0.06)',
+                      border: '1px solid rgba(244,63,94,0.12)',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--color-muted)'}
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>
@@ -307,65 +329,73 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
         )}
       </div>
 
-      {/* MODAL: Tranzaksiya Qo'shish */}
+      {/* ── MODAL: Add Transaction ── */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-950/95 border border-slate-800/80 rounded-3xl p-6 animate-scale-in shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+          style={{ background: 'rgba(4,8,16,0.85)', backdropFilter: 'blur(10px)' }}>
+          <div className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up"
+            style={{
+              background: 'var(--color-bg)',
+              border: '1px solid rgba(59,158,248,0.20)',
+              boxShadow: '0 -20px 60px rgba(13,27,75,0.40)',
+            }}>
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-extrabold text-brand-text">Yangi Xarajat Qayd Etish</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-brand-muted hover:text-brand-text text-sm font-medium">Yopish</button>
+              <h3 className="text-base font-extrabold" style={{ color: 'var(--color-text)' }}>
+                Yangi Xarajat
+              </h3>
+              <button onClick={() => setShowAddModal(false)}
+                className="p-1.5 rounded-xl"
+                style={{ background: 'rgba(59,158,248,0.08)', color: 'var(--color-muted)' }}>
+                <X size={16} />
+              </button>
             </div>
-            <form onSubmit={handleAddTransaction} className="flex flex-col gap-4">
+            <form onSubmit={handleAddTransaction} className="flex flex-col gap-3.5">
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Mablag' (UZS)</label>
-                <input 
-                  type="number" 
-                  required
-                  placeholder="Masalan: 25000"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Mablag' (UZS)</label>
+                <input
+                  type="number" required placeholder="Masalan: 25000"
+                  value={amount} onChange={e => setAmount(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm"
+                  style={{ color: 'var(--color-text)' }}
                 />
               </div>
-
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Joy / Do'kon (Merchant)</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Masalan: Korzinka, Yandex Go"
-                  value={merchant}
-                  onChange={e => setMerchant(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Joy / Do'kon</label>
+                <input
+                  type="text" required placeholder="Masalan: Korzinka"
+                  value={merchant} onChange={e => setMerchant(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm"
+                  style={{ color: 'var(--color-text)' }}
                 />
               </div>
-
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Toifa</label>
-                <select 
-                  value={category}
-                  onChange={e => setCategory(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none appearance-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238f9cae' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundPosition: 'right 16px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Toifa</label>
+                <select
+                  value={category} onChange={e => setCategory(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
+                  style={{ color: 'var(--color-text)' }}
                 >
                   {CATEGORIES.map(c => (
-                    <option key={c.name} value={c.name} className="bg-slate-950 text-brand-text">{c.name}</option>
+                    <option key={c.name} value={c.name}
+                      style={{ background: 'var(--color-bg)' }}>{c.name}</option>
                   ))}
                 </select>
               </div>
-
-              <div className="flex gap-3 mt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 bg-slate-900 border border-slate-800 text-brand-muted py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-xs uppercase tracking-wider"
-                >
-                  Bekor qilish
+              <div className="flex gap-3 mt-2">
+                <button type="button" onClick={() => setShowAddModal(false)}
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-colors"
+                  style={{
+                    background: 'rgba(59,158,248,0.06)',
+                    border: '1px solid rgba(59,158,248,0.16)',
+                    color: 'var(--color-muted)',
+                  }}>
+                  Bekor
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-extrabold py-3.5 rounded-2xl shadow-[0_0_15px_rgba(0,229,255,0.25)] hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider"
-                >
+                <button type="submit"
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
                   Saqlash
                 </button>
               </div>
@@ -374,39 +404,49 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
         </div>
       )}
 
-      {/* MODAL: Budjet Yangilash */}
+      {/* ── MODAL: Budget ── */}
       {showBudgetModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-950/95 border border-slate-800/80 rounded-3xl p-6 animate-scale-in shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+          style={{ background: 'rgba(4,8,16,0.85)', backdropFilter: 'blur(10px)' }}>
+          <div className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up"
+            style={{
+              background: 'var(--color-bg)',
+              border: '1px solid rgba(59,158,248,0.20)',
+              boxShadow: '0 -20px 60px rgba(13,27,75,0.40)',
+            }}>
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-extrabold text-brand-text">Oylik Umumiy Budjet Limitini O'rnatish</h3>
-              <button onClick={() => setShowBudgetModal(false)} className="text-brand-muted hover:text-brand-text text-sm font-medium">Yopish</button>
+              <h3 className="text-base font-extrabold" style={{ color: 'var(--color-text)' }}>
+                Oylik Budjet Limiti
+              </h3>
+              <button onClick={() => setShowBudgetModal(false)}
+                className="p-1.5 rounded-xl"
+                style={{ background: 'rgba(59,158,248,0.08)', color: 'var(--color-muted)' }}>
+                <X size={16} />
+              </button>
             </div>
-            <form onSubmit={handleUpdateBudget} className="flex flex-col gap-4">
+            <form onSubmit={handleUpdateBudget} className="flex flex-col gap-3.5">
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Budjet Limit (UZS)</label>
-                <input 
-                  type="number" 
-                  required
-                  placeholder="Masalan: 5000000"
-                  value={newBudget}
-                  onChange={e => setNewBudget(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Budjet (UZS)</label>
+                <input
+                  type="number" required placeholder="Masalan: 5000000"
+                  value={newBudget} onChange={e => setNewBudget(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm"
+                  style={{ color: 'var(--color-text)' }}
                 />
               </div>
-
-              <div className="flex gap-3 mt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowBudgetModal(false)}
-                  className="flex-1 bg-slate-900 border border-slate-800 text-brand-muted py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-xs uppercase tracking-wider"
-                >
-                  Bekor qilish
+              <div className="flex gap-3 mt-2">
+                <button type="button" onClick={() => setShowBudgetModal(false)}
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
+                  style={{
+                    background: 'rgba(59,158,248,0.06)',
+                    border: '1px solid rgba(59,158,248,0.16)',
+                    color: 'var(--color-muted)',
+                  }}>
+                  Bekor
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-extrabold py-3.5 rounded-2xl shadow-[0_0_15px_rgba(0,229,255,0.25)] hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider"
-                >
+                <button type="submit"
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
                   Yangilash
                 </button>
               </div>

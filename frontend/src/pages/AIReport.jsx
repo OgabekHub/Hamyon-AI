@@ -1,34 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, RefreshCw, BookOpen, AlertTriangle } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertTriangle } from 'lucide-react';
 
 const LOADER_MESSAGES = [
   "🧠 Hamyon AI xarajatlaringizni o'rganmoqda...",
-  "🌙 Ramazon va hayit bayramlari ta'sirini hisoblamoqda...",
-  "🚗 Bolt va Yandex taksi sarfiyatlarini taqqoslamoqda...",
-  "🛒 Korzinka va bozor-o'char narxlarini tahlil qilmoqda...",
-  "💡 Siz uchun maxsus tejash sirlarini yozmoqda..."
+  "🌙 Mavsumiy ta'sirlarni hisoblamoqda...",
+  "🚗 Transport xarajatlarini taqqoslamoqda...",
+  "🛒 Oziq-ovqat sarfiyatlarini tahlil qilmoqda...",
+  "💡 Maxsus tejash maslahatlarini yozmoqda...",
 ];
 
 export default function AIReport({ fetchWithAuth }) {
-  const [insight, setInsight] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [insight, setInsight]           = useState(null);
+  const [loading, setLoading]           = useState(true);
+  const [generating, setGenerating]     = useState(false);
   const [loaderMessage, setLoaderMessage] = useState(LOADER_MESSAGES[0]);
 
-  useEffect(() => {
-    loadInsight();
-  }, []);
+  useEffect(() => { loadInsight(); }, []);
 
   useEffect(() => {
-    let interval;
+    let iv;
     if (generating) {
-      let idx = 0;
-      interval = setInterval(() => {
-        idx = (idx + 1) % LOADER_MESSAGES.length;
-        setLoaderMessage(LOADER_MESSAGES[idx]);
-      }, 3000);
+      let i = 0;
+      iv = setInterval(() => { i = (i + 1) % LOADER_MESSAGES.length; setLoaderMessage(LOADER_MESSAGES[i]); }, 3000);
     }
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, [generating]);
 
   const loadInsight = async () => {
@@ -36,125 +31,165 @@ export default function AIReport({ fetchWithAuth }) {
       setLoading(true);
       const data = await fetchWithAuth('/api/insights');
       setInsight(data);
-    } catch (err) {
-      console.error('AI hisobot yuklashda xatolik:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const handleGenerate = async () => {
     try {
       setGenerating(true);
       setLoaderMessage(LOADER_MESSAGES[0]);
-      const data = await fetchWithAuth('/api/insights/generate', {
-        method: 'POST'
-      });
+      const data = await fetchWithAuth('/api/insights/generate', { method: 'POST' });
       setInsight(data);
-    } catch (err) {
-      console.error('AI hisobot yaratishda xatolik:', err);
-      alert('AI hisobot tayyorlashda xatolik yuz berdi. Iltimos keyinroq urinib ko\'ring.');
+    } catch {
+      alert("AI hisobot tayyorlashda xatolik. Keyinroq urinib ko'ring.");
     } finally {
       setGenerating(false);
     }
   };
 
   return (
-    <div className="pb-24 px-4 pt-5 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+    <div className="pb-28 px-4 pt-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5">
         <div>
-          <h2 className="text-xl font-extrabold text-brand-text flex items-center gap-2 tracking-tight">
-            <Sparkles size={20} className="text-brand-primary animate-pulse drop-shadow-[0_0_8px_rgba(0,229,255,0.4)]" /> AI Maslahatchi
+          <h2 className="text-xl font-extrabold tracking-tight flex items-center gap-2"
+            style={{ color: 'var(--color-text)' }}>
+            <Sparkles
+              size={20}
+              className="animate-pulse"
+              style={{ color: 'var(--color-primary)', filter: 'drop-shadow(0 0 8px rgba(59,158,248,0.6))' }}
+            />
+            AI Maslahatchi
           </h2>
-          <span className="text-xs text-brand-muted font-medium">Shaxsiy moliyaviy yordamchingiz</span>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
+            Shaxsiy moliyaviy yordamchingiz
+          </p>
         </div>
-        <button 
+        <button
           onClick={handleGenerate}
           disabled={loading || generating}
-          className="p-2.5 bg-slate-900 border border-slate-800/80 hover:bg-slate-800 text-brand-primary rounded-xl transition-all disabled:opacity-50"
+          className="p-2.5 rounded-xl transition-all disabled:opacity-40"
+          style={{
+            background: 'rgba(30,99,245,0.10)',
+            border: '1px solid rgba(59,158,248,0.20)',
+            color: 'var(--color-primary)',
+          }}
           title="Hisobotni yangilash"
         >
           <RefreshCw size={15} className={generating ? 'animate-spin' : ''} />
         </button>
       </div>
 
+      {/* States */}
       {loading ? (
-        <div className="text-center py-12 text-brand-muted text-sm animate-pulse">Hisobot yuklanmoqda...</div>
+        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
+          Yuklanmoqda...
+        </div>
       ) : generating ? (
-        <div className="glass rounded-3xl p-6 py-16 text-center border border-brand-primary/10 flex flex-col items-center justify-center gap-5 shadow-2xl">
-          <div className="w-12 h-12 rounded-full border-4 border-brand-primary border-t-transparent animate-spin shadow-[0_0_15px_rgba(0,229,255,0.2)]"></div>
-          <div className="flex flex-col gap-2 w-full max-w-[200px] mt-1">
-            <div className="h-1.5 bg-slate-950 rounded-full animate-pulse"></div>
-            <div className="h-2 bg-slate-950 rounded-full animate-pulse w-5/6 mx-auto"></div>
-            <div className="h-1.5 bg-slate-950 rounded-full animate-pulse w-2/3 mx-auto"></div>
+        <div className="glass rounded-3xl p-6 py-16 text-center flex flex-col items-center gap-5"
+          style={{ border: '1px solid rgba(59,158,248,0.15)' }}>
+          {/* Custom spinner */}
+          <div className="relative w-14 h-14">
+            <div className="absolute inset-0 rounded-full border-4 border-t-transparent animate-spin"
+              style={{ borderColor: 'rgba(59,158,248,0.20)', borderTopColor: 'transparent' }} />
+            <div className="absolute inset-1 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'rgba(30,99,245,0.40)', borderTopColor: 'transparent', animationDuration: '0.7s' }} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles size={18} style={{ color: 'var(--color-primary)' }} />
+            </div>
           </div>
-          <p className="text-xs font-semibold text-brand-primary max-w-xs animate-pulse tracking-wide leading-relaxed">
+          <p className="text-xs font-semibold max-w-xs animate-pulse leading-relaxed"
+            style={{ color: 'var(--color-primary)' }}>
             {loaderMessage}
           </p>
         </div>
+
       ) : !insight ? (
-        <div className="glass rounded-3xl p-8 py-12 text-center border border-dashed border-slate-800/80 flex flex-col items-center gap-4 shadow-xl">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-850 flex items-center justify-center text-2xl shadow-inner">🤖</div>
+        /* Empty state */
+        <div className="glass rounded-3xl p-8 py-12 text-center flex flex-col items-center gap-5"
+          style={{ border: '1px dashed rgba(59,158,248,0.18)' }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl animate-float"
+            style={{ background: 'linear-gradient(135deg, #0d1b4b, #1e63f5)' }}>
+            🤖
+          </div>
           <div>
-            <h4 className="font-extrabold text-sm text-brand-text mb-1 tracking-tight">AI Moliyaviy Tahlili Mavjud Emas</h4>
-            <p className="text-xs text-brand-muted max-w-xs mx-auto leading-relaxed mt-1">
-              Xarajatlaringiz va qarz daftaringiz asosida sun'iy intellektdan o'zbekona moliyaviy tavsiyalar olish uchun quyidagi tugmani bosing.
+            <h4 className="font-extrabold text-sm mb-2" style={{ color: 'var(--color-text)' }}>
+              AI Tahlili Mavjud Emas
+            </h4>
+            <p className="text-xs max-w-xs mx-auto leading-relaxed" style={{ color: 'var(--color-muted)' }}>
+              Xarajatlaringiz asosida o'zbekona moliyaviy tavsiyalar olish uchun quyidagi tugmani bosing.
             </p>
           </div>
-          <button
-            onClick={handleGenerate}
-            className="bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-extrabold px-5 py-3 rounded-2xl text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,229,255,0.25)] hover:scale-103 transition-all"
-          >
-            Tahlil Yaratish
+          <button onClick={handleGenerate}
+            className="px-6 py-3 rounded-2xl text-sm font-extrabold uppercase tracking-wider text-white btn-primary">
+            ✨ Tahlil Yaratish
           </button>
         </div>
+
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* Asosiy Maslahatlar Kartasi */}
-          <div className="glass glass-glow-primary rounded-3xl p-6 relative overflow-hidden shadow-2xl">
-            <div className="absolute -top-12 -right-12 w-36 h-36 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-900">
-              <span className="text-[9px] text-brand-primary bg-brand-primary/10 border border-brand-primary/20 font-bold px-2.5 py-1 rounded-xl uppercase tracking-wider">
+        /* Insight card */
+        <div className="flex flex-col gap-5">
+          {/* Main card */}
+          <div className="glass-glow-primary rounded-3xl p-6 relative overflow-hidden"
+            style={{ background: 'var(--color-glass-bg)' }}>
+            {/* Decorative glow blobs */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(59,158,248,0.10) 0%, transparent 70%)' }} />
+            <div className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(30,99,245,0.08) 0%, transparent 70%)' }} />
+
+            {/* Badge row */}
+            <div className="flex items-center gap-3 mb-5 pb-4 relative z-10"
+              style={{ borderBottom: '1px solid rgba(59,158,248,0.12)' }}>
+              <span className="text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-xl"
+                style={{
+                  color: 'var(--color-primary)',
+                  background: 'rgba(30,99,245,0.10)',
+                  border: '1px solid rgba(59,158,248,0.20)',
+                }}>
                 Hamyon AI Tahlili
               </span>
-              <span className="text-[10px] text-brand-muted font-medium">
+              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
                 {new Date(insight.generated_at).toLocaleString('uz-UZ')}
               </span>
             </div>
 
-            {/* Premium formatlangan AI matni */}
-            <div className="flex flex-col gap-4">
-              {insight.insight_text.split('\n').map((line, index) => {
+            {/* Parsed insight text */}
+            <div className="flex flex-col gap-3 relative z-10">
+              {insight.insight_text.split('\n').map((line, idx) => {
                 const trimmed = line.trim();
                 if (!trimmed) return null;
-
-                // Headers
                 const isHeader = trimmed.startsWith('###') || (trimmed.startsWith('**') && trimmed.endsWith('**'));
-                // Bullet points
-                const isBullet = trimmed.startsWith('-') || trimmed.startsWith('*') && !trimmed.endsWith('**');
+                const isBullet = trimmed.startsWith('-') || (trimmed.startsWith('*') && !trimmed.endsWith('**'));
 
                 if (isHeader) {
                   return (
-                    <h4 key={index} className="text-xs font-black text-brand-primary uppercase tracking-widest mt-4 flex items-center gap-2 pb-1 border-b border-slate-950/40">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary inline-block"></span>
+                    <h4 key={idx}
+                      className="text-xs font-black uppercase tracking-widest mt-3 flex items-center gap-2 pb-1"
+                      style={{
+                        color: 'var(--color-primary)',
+                        borderBottom: '1px solid rgba(59,158,248,0.10)',
+                      }}>
+                      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--color-primary)' }} />
                       {trimmed.replace(/###|\*\*/g, '').trim()}
                     </h4>
                   );
                 }
-                
                 if (isBullet) {
                   return (
-                    <div key={index} className="flex items-start gap-2.5 text-[11px] leading-relaxed text-brand-muted pl-2 mt-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-primary shrink-0 mt-2 shadow-[0_0_6px_#00e5ff]"></span>
-                      <span className="font-medium text-brand-muted/95">{trimmed.replace(/^-\s*|^\*\s*/, '').trim()}</span>
+                    <div key={idx} className="flex items-start gap-2.5 text-[11px] leading-relaxed pl-2">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
+                        style={{ background: 'var(--color-primary)', boxShadow: '0 0 5px rgba(59,158,248,0.5)' }} />
+                      <span style={{ color: 'var(--color-muted)' }}>
+                        {trimmed.replace(/^-\s*|^\*\s*/, '').trim()}
+                      </span>
                     </div>
                   );
                 }
-
-                // Normal Paragraph
                 return (
-                  <p key={index} className="text-[11px] text-brand-text/90 leading-relaxed font-medium mt-1">
+                  <p key={idx} className="text-[11px] leading-relaxed" style={{ color: 'var(--color-text)' }}>
                     {trimmed}
                   </p>
                 );
@@ -162,12 +197,15 @@ export default function AIReport({ fetchWithAuth }) {
             </div>
           </div>
 
-          {/* Eslatma va ogohlantirish */}
-          <div className="bg-slate-950/60 border border-slate-900 rounded-2xl p-4 flex gap-3 text-[10px] text-brand-muted shadow-sm">
-            <AlertTriangle className="text-brand-warning shrink-0" size={16} />
-            <div>
-              <strong className="text-brand-text block mb-0.5 font-bold uppercase tracking-wider">Eslatma:</strong>
-              Ushbu maslahatlar sun'iy intellekt tomonidan taqdim etilgan bo'lib, xarajatlar tahlili va milliy kontekstga asoslangan tavsiyaviy xarakterga ega.
+          {/* Disclaimer */}
+          <div className="glass rounded-2xl p-4 flex gap-3 text-[10px]"
+            style={{ border: '1px solid rgba(245,158,11,0.15)' }}>
+            <AlertTriangle size={15} className="shrink-0 mt-0.5" style={{ color: 'var(--color-warning)' }} />
+            <div style={{ color: 'var(--color-muted)' }}>
+              <strong className="block mb-0.5 uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
+                Eslatma:
+              </strong>
+              Ushbu maslahatlar sun'iy intellekt tomonidan taqdim etilgan bo'lib, tavsiyaviy xarakterga ega.
             </div>
           </div>
         </div>

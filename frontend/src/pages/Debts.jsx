@@ -1,207 +1,195 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Check, Trash2, ArrowUpRight, ArrowDownLeft, Calendar, User, Undo2 } from 'lucide-react';
+import { Plus, Check, Trash2, ArrowUpRight, ArrowDownLeft, Calendar, User, Undo2, X, BookOpen } from 'lucide-react';
 
 export default function Debts({ fetchWithAuth }) {
-  const [debts, setDebts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('owed'); // 'owed' (menga qarz), 'owing' (men qarzman)
+  const [debts, setDebts]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [activeTab, setActiveTab]   = useState('owed');
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Form states
   const [personName, setPersonName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState('owed');
-  const [dueDate, setDueDate] = useState('');
+  const [amount, setAmount]         = useState('');
+  const [type, setType]             = useState('owed');
+  const [dueDate, setDueDate]       = useState('');
 
-  useEffect(() => {
-    loadDebts();
-  }, []);
+  useEffect(() => { loadDebts(); }, []);
 
   const loadDebts = async () => {
     try {
       setLoading(true);
       const data = await fetchWithAuth('/api/debts');
       setDebts(data);
-    } catch (err) {
-      console.error('Qarzlarni yuklashda xatolik:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const handleAddDebt = async (e) => {
     e.preventDefault();
     if (!personName || !amount || Number(amount) <= 0) return;
-
     try {
       await fetchWithAuth('/api/debts', {
         method: 'POST',
-        body: JSON.stringify({
-          person_name: personName,
-          amount: parseFloat(amount),
-          type,
-          due_date: dueDate || null
-        })
+        body: JSON.stringify({ person_name: personName, amount: parseFloat(amount), type, due_date: dueDate || null }),
       });
       setShowAddModal(false);
-      setPersonName('');
-      setAmount('');
-      setType('owed');
-      setDueDate('');
+      setPersonName(''); setAmount(''); setType('owed'); setDueDate('');
       loadDebts();
-    } catch (err) {
-      console.error('Qarz qo\'shishda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const handleTogglePaid = async (id, currentPaidStatus) => {
+  const handleTogglePaid = async (id, isPaid) => {
     try {
-      await fetchWithAuth(`/api/debts/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ is_paid: !currentPaidStatus })
-      });
+      await fetchWithAuth(`/api/debts/${id}`, { method: 'PATCH', body: JSON.stringify({ is_paid: !isPaid }) });
       loadDebts();
-    } catch (err) {
-      console.error('Holatni o\'zgartirishda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const handleDeleteDebt = async (id) => {
-    if (!confirm('Ushbu qarz yozuvini butunlay o\'chirmoqchimisiz?')) return;
+    if (!confirm("O'chirilsinmi?")) return;
     try {
-      await fetchWithAuth(`/api/debts/${id}`, {
-        method: 'DELETE'
-      });
+      await fetchWithAuth(`/api/debts/${id}`, { method: 'DELETE' });
       loadDebts();
-    } catch (err) {
-      console.error('O\'chirishda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  const unpaidDebts = debts.filter(d => !d.is_paid);
-  const paidDebts = debts.filter(d => d.is_paid);
-
-  // Tab bo'yicha saralash
+  const unpaidDebts  = debts.filter(d => !d.is_paid);
+  const paidDebts    = debts.filter(d => d.is_paid);
   const currentUnpaid = unpaidDebts.filter(d => d.type === activeTab);
-  const currentPaid = paidDebts.filter(d => d.type === activeTab);
-
-  // Umumiy sarhisob
-  const totalOwed = unpaidDebts.filter(d => d.type === 'owed').reduce((sum, d) => sum + Number(d.amount), 0);
-  const totalOwing = unpaidDebts.filter(d => d.type === 'owing').reduce((sum, d) => sum + Number(d.amount), 0);
+  const currentPaid   = paidDebts.filter(d => d.type === activeTab);
+  const totalOwed    = unpaidDebts.filter(d => d.type === 'owed').reduce((s, d) => s + Number(d.amount), 0);
+  const totalOwing   = unpaidDebts.filter(d => d.type === 'owing').reduce((s, d) => s + Number(d.amount), 0);
 
   return (
-    <div className="pb-24 px-4 pt-5 animate-fade-in">
-      {/* Sarlavha va Qo'shish */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-xl font-extrabold text-brand-text tracking-tight">Qarz Daftari</h2>
-          <span className="text-xs text-brand-muted font-medium">Barcha olingan va berilgan qarzlarni nazorat qiling.</span>
+    <div className="pb-28 px-4 pt-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0d1b4b, #1e63f5)' }}>
+            <BookOpen size={15} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
+              Qarz Daftari
+            </h2>
+          </div>
         </div>
-        <button 
+        <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-bold px-4 py-2.5 rounded-2xl shadow-[0_0_15px_rgba(0,229,255,0.3)] hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider"
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider text-white btn-primary"
         >
-          <Plus size={16} strokeWidth={2.5} /> Yangi qarz
+          <Plus size={15} strokeWidth={2.5} /> Yangi
         </button>
       </div>
 
-      {/* Jami Kartalari */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="glass glass-glow-success rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden shadow-md">
-          <div className="w-9 h-9 rounded-2xl bg-emerald-500/10 text-brand-success border border-brand-success/15 flex items-center justify-center mb-2.5 shadow-inner">
-            <ArrowDownLeft size={18} />
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        <div className="glass rounded-2xl p-4 flex flex-col gap-2"
+          style={{ borderColor: 'rgba(16,185,129,0.20)', borderLeftWidth: '3px', borderLeftColor: '#10b981' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.20)' }}>
+            <ArrowDownLeft size={16} style={{ color: '#10b981' }} />
           </div>
-          <span className="text-[10px] text-brand-muted font-bold uppercase tracking-wider block">Menga qarz</span>
-          <span className="text-base font-black text-brand-text truncate mt-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+            Menga qarz
+          </span>
+          <span className="text-sm font-extrabold truncate" style={{ color: 'var(--color-text)' }}>
             {totalOwed.toLocaleString('uz-UZ')} UZS
           </span>
         </div>
-
-        <div className="glass glass-glow-danger rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden shadow-md">
-          <div className="w-9 h-9 rounded-2xl bg-rose-500/10 text-brand-danger border border-brand-danger/15 flex items-center justify-center mb-2.5 shadow-inner">
-            <ArrowUpRight size={18} />
+        <div className="glass rounded-2xl p-4 flex flex-col gap-2"
+          style={{ borderColor: 'rgba(244,63,94,0.20)', borderLeftWidth: '3px', borderLeftColor: '#f43f5e' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.20)' }}>
+            <ArrowUpRight size={16} style={{ color: '#f43f5e' }} />
           </div>
-          <span className="text-[10px] text-brand-muted font-bold uppercase tracking-wider block">Men qarzman</span>
-          <span className="text-base font-black text-brand-text truncate mt-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>
+            Men qarzman
+          </span>
+          <span className="text-sm font-extrabold truncate" style={{ color: 'var(--color-text)' }}>
             {totalOwing.toLocaleString('uz-UZ')} UZS
           </span>
         </div>
       </div>
 
-      {/* Tab Navigatsiyasi */}
-      <div className="flex bg-slate-950/80 p-1.5 rounded-2xl mb-6 border border-slate-900 shadow-inner">
-        <button
-          onClick={() => setActiveTab('owed')}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'owed' 
-              ? 'bg-slate-900 text-brand-primary border border-slate-800/40 shadow-md scale-102' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          Menga qarzlar ({unpaidDebts.filter(d => d.type === 'owed').length})
-        </button>
-        <button
-          onClick={() => setActiveTab('owing')}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'owing' 
-              ? 'bg-slate-900 text-brand-primary border border-slate-800/40 shadow-md scale-102' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          Men qarzman ({unpaidDebts.filter(d => d.type === 'owing').length})
-        </button>
+      {/* Tab switcher */}
+      <div className="flex p-1 rounded-2xl mb-5 gap-1"
+        style={{ background: 'rgba(13,27,75,0.12)', border: '1px solid rgba(59,158,248,0.12)' }}>
+        {[
+          { key: 'owed',  label: `Menga qarz (${unpaidDebts.filter(d => d.type === 'owed').length})` },
+          { key: 'owing', label: `Men qarzman (${unpaidDebts.filter(d => d.type === 'owing').length})` },
+        ].map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            className="flex-1 py-2 rounded-xl text-xs font-bold transition-all duration-200"
+            style={
+              activeTab === t.key
+                ? { background: 'linear-gradient(135deg, #1e63f5, #3b9ef8)', color: '#fff', boxShadow: '0 0 14px rgba(30,99,245,0.30)' }
+                : { color: 'var(--color-muted)' }
+            }
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* Ro'yxat */}
+      {/* Debt list */}
       {loading ? (
-        <div className="text-center py-12 text-brand-muted text-sm animate-pulse">Yuklanmoqda...</div>
+        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
+          Yuklanmoqda...
+        </div>
       ) : currentUnpaid.length === 0 && currentPaid.length === 0 ? (
-        <div className="glass rounded-3xl p-12 text-center text-brand-muted text-sm border border-dashed border-slate-800/80">
-          📓 Bu ro'yxatda faol qarzlar mavjud emas.
+        <div className="glass rounded-3xl p-12 text-center text-sm"
+          style={{ color: 'var(--color-muted)', border: '1px dashed rgba(59,158,248,0.15)' }}>
+          📓 Bu ro'yxatda qarzlar mavjud emas.
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* Faol qarzlar */}
+        <div className="flex flex-col gap-5">
+          {/* Active */}
           {currentUnpaid.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[10px] font-bold text-brand-muted uppercase tracking-widest pl-1">Faol qarzlar</h3>
-              {currentUnpaid.map((d) => (
-                <div key={d.id} className={`glass hover:bg-slate-900/40 border border-slate-950 hover:border-slate-800/30 rounded-2xl p-4 flex justify-between items-center transition-all duration-300 transform hover:-translate-y-0.5 shadow-md border-l-[4px] ${
-                  activeTab === 'owed' ? 'border-l-brand-success' : 'border-l-brand-warning'
-                }`}>
+            <div className="flex flex-col gap-2.5">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest pl-1" style={{ color: 'var(--color-muted)' }}>
+                Faol qarzlar
+              </h3>
+              {currentUnpaid.map(d => (
+                <div key={d.id} className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center transition-all hover:-translate-y-0.5"
+                  style={{
+                    borderLeftWidth: '3px',
+                    borderLeftColor: activeTab === 'owed' ? '#10b981' : '#f59e0b',
+                    borderColor: activeTab === 'owed' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                  }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-850 flex items-center justify-center text-brand-muted">
-                      <User size={16} />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                      style={{ background: 'rgba(30,99,245,0.10)', border: '1px solid rgba(59,158,248,0.15)' }}>
+                      <User size={16} style={{ color: 'var(--color-muted)' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-brand-text">{d.person_name}</h4>
-                      <span className="text-[10px] text-brand-muted flex items-center gap-1 mt-0.5">
+                      <h4 className="font-bold text-sm" style={{ color: 'var(--color-text)' }}>{d.person_name}</h4>
+                      <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: 'var(--color-muted)' }}>
                         {d.due_date ? (
-                          <>
-                            <Calendar size={11} className="text-brand-muted" /> Qaytarish muddati: {d.due_date}
-                          </>
+                          <><Calendar size={10} /> {d.due_date}</>
                         ) : (
                           <span className="italic">Muddatsiz</span>
                         )}
-                      </span>
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-brand-text mr-1">
+                    <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
                       {Number(d.amount).toLocaleString('uz-UZ')} UZS
                     </span>
-                    <button 
-                      onClick={() => handleTogglePaid(d.id, d.is_paid)}
-                      className="w-8 h-8 rounded-xl bg-brand-success/10 hover:bg-brand-success border border-brand-success/20 text-brand-success hover:text-slate-950 flex items-center justify-center transition-all duration-200"
-                      title="To'landi deb belgilash"
-                    >
+                    <button onClick={() => handleTogglePaid(d.id, d.is_paid)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                      style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.20)', color: '#10b981' }}
+                      title="To'landi">
                       <Check size={14} strokeWidth={2.5} />
                     </button>
-                    <button 
-                      onClick={() => handleDeleteDebt(d.id)}
-                      className="w-8 h-8 rounded-xl bg-brand-danger/10 hover:bg-brand-danger border border-brand-danger/20 text-brand-danger hover:text-slate-950 flex items-center justify-center transition-all duration-200"
-                      title="O'chirish"
-                    >
+                    <button onClick={() => handleDeleteDebt(d.id)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                      style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.15)', color: '#f43f5e' }}
+                      title="O'chirish">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -210,36 +198,40 @@ export default function Debts({ fetchWithAuth }) {
             </div>
           )}
 
-          {/* To'langan qarzlar */}
+          {/* Paid */}
           {currentPaid.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h3 className="text-[10px] font-bold text-brand-muted uppercase tracking-widest pl-1">To'langan qarzlar</h3>
-              {currentPaid.map((d) => (
-                <div key={d.id} className="glass rounded-2xl p-4 flex justify-between items-center opacity-50 border-l-[4px] border-l-slate-700">
+            <div className="flex flex-col gap-2.5 opacity-60">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest pl-1" style={{ color: 'var(--color-muted)' }}>
+                To'langan
+              </h3>
+              {currentPaid.map(d => (
+                <div key={d.id} className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center"
+                  style={{ borderColor: 'rgba(59,158,248,0.08)' }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-850 flex items-center justify-center text-brand-muted opacity-60">
-                      <User size={16} />
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                      style={{ background: 'rgba(30,99,245,0.06)', border: '1px solid rgba(59,158,248,0.10)' }}>
+                      <User size={16} style={{ color: 'var(--color-muted)' }} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-brand-text line-through">{d.person_name}</h4>
-                      <span className="text-[9px] bg-slate-900 text-brand-success border border-brand-success/15 px-2 py-0.5 rounded-lg mt-0.5 inline-block font-semibold">To'langan</span>
+                      <h4 className="font-bold text-sm line-through" style={{ color: 'var(--color-muted)' }}>{d.person_name}</h4>
+                      <span className="text-[9px] font-semibold px-2 py-0.5 rounded-lg mt-0.5 inline-block"
+                        style={{ color: '#10b981', background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.15)' }}>
+                        To'langan ✓
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-brand-text line-through mr-1">
+                    <span className="font-extrabold text-sm line-through" style={{ color: 'var(--color-muted)' }}>
                       {Number(d.amount).toLocaleString('uz-UZ')} UZS
                     </span>
-                    <button 
-                      onClick={() => handleTogglePaid(d.id, d.is_paid)}
-                      className="w-14 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-brand-primary flex items-center justify-center gap-0.5 transition-all border border-slate-800"
-                      title="Qayta faollashtirish"
-                    >
+                    <button onClick={() => handleTogglePaid(d.id, d.is_paid)}
+                      className="px-3 h-8 rounded-xl flex items-center gap-1 text-[10px] font-bold transition-all"
+                      style={{ background: 'rgba(59,158,248,0.08)', border: '1px solid rgba(59,158,248,0.15)', color: 'var(--color-primary)' }}>
                       <Undo2 size={10} /> Qaytar
                     </button>
-                    <button 
-                      onClick={() => handleDeleteDebt(d.id)}
-                      className="w-8 h-8 rounded-xl bg-brand-danger/10 hover:bg-brand-danger border border-brand-danger/20 text-brand-danger hover:text-slate-950 flex items-center justify-center transition-all duration-200"
-                    >
+                    <button onClick={() => handleDeleteDebt(d.id)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                      style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.12)', color: '#f43f5e' }}>
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -250,74 +242,62 @@ export default function Debts({ fetchWithAuth }) {
         </div>
       )}
 
-      {/* MODAL: Yangi Qarz Qo'shish */}
+      {/* MODAL: Add Debt */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-950/95 border border-slate-800/80 rounded-3xl p-6 animate-scale-in shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+          style={{ background: 'rgba(4,8,16,0.88)', backdropFilter: 'blur(10px)' }}>
+          <div className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up"
+            style={{
+              background: 'var(--color-bg)',
+              border: '1px solid rgba(59,158,248,0.20)',
+              boxShadow: '0 -20px 60px rgba(13,27,75,0.40)',
+            }}>
             <div className="flex justify-between items-center mb-5">
-              <h3 className="text-lg font-extrabold text-brand-text">Yangi Qarz Qayd Etish</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-brand-muted hover:text-brand-text text-sm font-medium">Yopish</button>
+              <h3 className="text-base font-extrabold" style={{ color: 'var(--color-text)' }}>Yangi Qarz</h3>
+              <button onClick={() => setShowAddModal(false)}
+                className="p-1.5 rounded-xl" style={{ background: 'rgba(59,158,248,0.08)', color: 'var(--color-muted)' }}>
+                <X size={16} />
+              </button>
             </div>
-            <form onSubmit={handleAddDebt} className="flex flex-col gap-4">
+            <form onSubmit={handleAddDebt} className="flex flex-col gap-3.5">
+              {[
+                { label: "Kim? (Ism-sharif)", type: 'text',   val: personName, setVal: setPersonName, placeholder: 'Masalan: Anvar aka' },
+                { label: "Mablag' (UZS)",     type: 'number', val: amount,     setVal: setAmount,     placeholder: '500000' },
+              ].map(({ label, type: t, val, setVal, placeholder }) => (
+                <div key={label}>
+                  <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                    style={{ color: 'var(--color-muted)' }}>{label}</label>
+                  <input type={t} required placeholder={placeholder}
+                    value={val} onChange={e => setVal(e.target.value)}
+                    className="w-full glass-input px-4 py-3.5 text-sm"
+                    style={{ color: 'var(--color-text)' }} />
+                </div>
+              ))}
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Kim? (Ism-sharif)</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Masalan: Anvar aka, Dilnoza"
-                  value={personName}
-                  onChange={e => setPersonName(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Mablag' (UZS)</label>
-                <input 
-                  type="number" 
-                  required
-                  placeholder="Masalan: 500000"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Qarz turi</label>
-                <select 
-                  value={type}
-                  onChange={e => setType(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none appearance-none"
-                  style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238f9cae' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundPosition: 'right 16px center', backgroundRepeat: 'no-repeat', backgroundSize: '16px' }}
-                >
-                  <option value="owed" className="bg-slate-950 text-brand-text">Menga qarz (Owed)</option>
-                  <option value="owing" className="bg-slate-950 text-brand-text">Men qarzman (Owing)</option>
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Qarz turi</label>
+                <select value={type} onChange={e => setType(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
+                  style={{ color: 'var(--color-text)' }}>
+                  <option value="owed"  style={{ background: 'var(--color-bg)' }}>Menga qarz (Owed)</option>
+                  <option value="owing" style={{ background: 'var(--color-bg)' }}>Men qarzman (Owing)</option>
                 </select>
               </div>
-
               <div>
-                <label className="text-[10px] font-bold text-brand-muted uppercase tracking-wider block mb-1.5">Qaytarish muddati (ixtiyoriy)</label>
-                <input 
-                  type="date" 
-                  value={dueDate}
-                  onChange={e => setDueDate(e.target.value)}
-                  className="w-full glass-input rounded-2xl px-4 py-3.5 text-brand-text focus:outline-none"
-                />
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                  style={{ color: 'var(--color-muted)' }}>Qaytarish muddati (ixtiyoriy)</label>
+                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)}
+                  className="w-full glass-input px-4 py-3.5 text-sm"
+                  style={{ color: 'var(--color-text)' }} />
               </div>
-
-              <div className="flex gap-3 mt-4">
-                <button 
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 bg-slate-900 border border-slate-800 text-brand-muted py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-xs uppercase tracking-wider"
-                >
-                  Bekor qilish
+              <div className="flex gap-3 mt-2">
+                <button type="button" onClick={() => setShowAddModal(false)}
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
+                  style={{ background: 'rgba(59,158,248,0.06)', border: '1px solid rgba(59,158,248,0.16)', color: 'var(--color-muted)' }}>
+                  Bekor
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 font-extrabold py-3.5 rounded-2xl shadow-[0_0_15px_rgba(0,229,255,0.25)] hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-wider"
-                >
+                <button type="submit"
+                  className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
                   Qo'shish
                 </button>
               </div>

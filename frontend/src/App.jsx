@@ -5,11 +5,19 @@ import Transactions from './pages/Transactions';
 import Budget from './pages/Budget';
 import Debts from './pages/Debts';
 import AIReport from './pages/AIReport';
-import { LayoutDashboard, History, Target, BookOpen, Sparkles, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, History, Target, BookOpen, Sparkles, Sun, Moon, Wallet } from 'lucide-react';
+
+const NAV_TABS = [
+  { key: 'home',         label: 'Bosh',     Icon: LayoutDashboard },
+  { key: 'transactions', label: 'Xarajat',  Icon: History },
+  { key: 'budget',       label: 'Budjet',   Icon: Target },
+  { key: 'debts',        label: 'Qarzlar',  Icon: BookOpen },
+  { key: 'ai_report',   label: 'AI',        Icon: Sparkles },
+];
 
 export default function App() {
   const { user, loading, fetchWithAuth } = useTelegram();
-  const [activeTab, setActiveTab] = useState('home'); // home, transactions, budget, debts, ai_report
+  const [activeTab, setActiveTab] = useState('home');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
@@ -23,140 +31,133 @@ export default function App() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
   if (loading) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-brand-bg text-brand-text min-h-screen">
-        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mb-4 shadow-[0_0_15px_var(--color-primary-glow)]"></div>
-        <p className="text-sm font-semibold animate-pulse text-brand-primary tracking-wider">Hamyon AI yuklanmoqda...</p>
+      <div className="w-full min-h-screen flex flex-col items-center justify-center"
+        style={{ background: 'radial-gradient(ellipse at 20% 0%, #0d1630 0%, #040810 100%)' }}>
+        {/* Animated logo/spinner */}
+        <div className="relative mb-6">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0d1b4b 0%, #1e63f5 100%)' }}>
+            <Wallet size={30} className="text-white" />
+          </div>
+          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/30 animate-ping" />
+        </div>
+        <p className="text-sm font-bold tracking-widest uppercase"
+          style={{ color: '#3b9ef8' }}>
+          Hamyon AI
+        </p>
+        <p className="text-xs mt-1" style={{ color: '#7fa8d4' }}>yuklanmoqda...</p>
       </div>
     );
   }
 
-  // Sahifalarni render qilish
   const renderContent = () => {
     switch (activeTab) {
-      case 'home':
-        return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
-      case 'transactions':
-        return <Transactions fetchWithAuth={fetchWithAuth} />;
-      case 'budget':
-        return <Budget fetchWithAuth={fetchWithAuth} />;
-      case 'debts':
-        return <Debts fetchWithAuth={fetchWithAuth} />;
-      case 'ai_report':
-        return <AIReport fetchWithAuth={fetchWithAuth} />;
-      default:
-        return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
+      case 'home':         return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
+      case 'transactions': return <Transactions fetchWithAuth={fetchWithAuth} />;
+      case 'budget':       return <Budget fetchWithAuth={fetchWithAuth} />;
+      case 'debts':        return <Debts fetchWithAuth={fetchWithAuth} />;
+      case 'ai_report':    return <AIReport fetchWithAuth={fetchWithAuth} />;
+      default:             return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
     }
   };
 
   return (
-    <div className="h-full flex flex-col justify-between max-w-md mx-auto relative bg-brand-bg min-h-screen transition-colors duration-300">
-      
-      {/* Global Header Bar */}
-      <div className="px-4 py-3.5 flex justify-between items-center border-b border-slate-900/10 dark:border-slate-800/40 relative z-30 bg-slate-900/5 dark:bg-transparent">
-        <span className="text-xs font-black tracking-widest text-brand-primary uppercase">Hamyon AI</span>
-        <button 
+    <div className="h-full flex flex-col max-w-md mx-auto relative min-h-screen transition-colors duration-300"
+      style={{ background: 'var(--color-bg)' }}>
+
+      {/* ── Global Header ── */}
+      <div className="px-4 py-3 flex justify-between items-center relative z-30"
+        style={{
+          background: 'rgba(13,27,75,0.06)',
+          borderBottom: '1px solid rgba(59,158,248,0.12)',
+          backdropFilter: 'blur(12px)',
+        }}>
+        {/* Logo wordmark */}
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-glow-primary"
+            style={{ background: 'linear-gradient(135deg, #0d1b4b 0%, #1e63f5 100%)' }}>
+            <Wallet size={14} className="text-white" />
+          </div>
+          <span className="text-sm font-black tracking-widest uppercase"
+            style={{ color: 'var(--color-primary)' }}>
+            Hamyon AI
+          </span>
+        </div>
+
+        {/* Theme toggle */}
+        <button
           onClick={toggleTheme}
-          className="p-2 bg-brand-card hover:bg-brand-primary/10 border border-slate-900/10 dark:border-slate-800/40 rounded-xl text-brand-primary transition-all duration-200 active:scale-95"
-          title={theme === 'dark' ? "Kunduzgi rejim" : "Tungi rejim"}
+          className="p-2 rounded-xl border transition-all duration-200 active:scale-90"
+          style={{
+            background: 'rgba(30,99,245,0.08)',
+            border: '1px solid rgba(59,158,248,0.20)',
+            color: 'var(--color-primary)',
+          }}
+          title={theme === 'dark' ? 'Kunduzgi rejim' : 'Tungi rejim'}
         >
           {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </button>
       </div>
 
-      {/* Asosiy Kontent oqimi */}
-      <div className="flex-1 overflow-y-auto pb-28">
-        <div className="animate-fade-in">
-          {renderContent()}
-        </div>
+      {/* ── Content ── */}
+      <div className="flex-1 overflow-y-auto pb-28 scrollbar-none">
+        <div className="animate-fade-in">{renderContent()}</div>
       </div>
 
-      {/* Floating Premium Bottom Tab Bar */}
-      <div className="fixed bottom-6 left-4 right-4 z-40 bg-brand-card backdrop-blur-xl border border-slate-900/15 dark:border-slate-800/40 px-3 py-2.5 flex justify-around items-center max-w-sm mx-auto rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
-        {/* Dashboard */}
-        <button
-          onClick={() => setActiveTab('home')}
-          className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all duration-300 relative ${
-            activeTab === 'home' 
-              ? 'text-brand-primary scale-110 font-bold' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          <LayoutDashboard size={20} className={activeTab === 'home' ? 'drop-shadow-[0_0_8px_var(--color-primary-glow)]' : ''} />
-          <span className="text-[10px] tracking-wide">Dashboard</span>
-          {activeTab === 'home' && (
-            <span className="absolute -bottom-1 w-1 h-1 bg-brand-primary rounded-full animate-ping"></span>
-          )}
-        </button>
-
-        {/* Transactions */}
-        <button
-          onClick={() => setActiveTab('transactions')}
-          className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all duration-300 relative ${
-            activeTab === 'transactions' 
-              ? 'text-brand-primary scale-110 font-bold' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          <History size={20} className={activeTab === 'transactions' ? 'drop-shadow-[0_0_8px_var(--color-primary-glow)]' : ''} />
-          <span className="text-[10px] tracking-wide">Xarajatlar</span>
-          {activeTab === 'transactions' && (
-            <span className="absolute -bottom-1 w-1 h-1 bg-brand-primary rounded-full animate-ping"></span>
-          )}
-        </button>
-
-        {/* Budget */}
-        <button
-          onClick={() => setActiveTab('budget')}
-          className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all duration-300 relative ${
-            activeTab === 'budget' 
-              ? 'text-brand-primary scale-110 font-bold' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          <Target size={20} className={activeTab === 'budget' ? 'drop-shadow-[0_0_8px_var(--color-primary-glow)]' : ''} />
-          <span className="text-[10px] tracking-wide">Budjet</span>
-          {activeTab === 'budget' && (
-            <span className="absolute -bottom-1 w-1 h-1 bg-brand-primary rounded-full animate-ping"></span>
-          )}
-        </button>
-
-        {/* Debts */}
-        <button
-          onClick={() => setActiveTab('debts')}
-          className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all duration-300 relative ${
-            activeTab === 'debts' 
-              ? 'text-brand-primary scale-110 font-bold' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          <BookOpen size={20} className={activeTab === 'debts' ? 'drop-shadow-[0_0_8px_var(--color-primary-glow)]' : ''} />
-          <span className="text-[10px] tracking-wide">Qarzlar</span>
-          {activeTab === 'debts' && (
-            <span className="absolute -bottom-1 w-1 h-1 bg-brand-primary rounded-full animate-ping"></span>
-          )}
-        </button>
-
-        {/* AI Report */}
-        <button
-          onClick={() => setActiveTab('ai_report')}
-          className={`flex flex-col items-center gap-1.5 py-1 px-3.5 rounded-xl transition-all duration-300 relative ${
-            activeTab === 'ai_report' 
-              ? 'text-brand-primary scale-110 font-bold' 
-              : 'text-brand-muted hover:text-brand-text'
-          }`}
-        >
-          <Sparkles size={20} className={activeTab === 'ai_report' ? 'animate-pulse text-brand-primary drop-shadow-[0_0_10px_var(--color-primary-glow)]' : ''} />
-          <span className="text-[10px] tracking-wide">AI Tahlil</span>
-          {activeTab === 'ai_report' && (
-            <span className="absolute -bottom-1 w-1 h-1 bg-brand-primary rounded-full animate-ping"></span>
-          )}
-        </button>
+      {/* ── Premium Floating Bottom Tab Bar ── */}
+      <div
+        className="fixed bottom-4 left-4 right-4 z-40 flex justify-around items-center px-2 py-2 rounded-2xl max-w-sm mx-auto"
+        style={{
+          background: theme === 'dark'
+            ? 'rgba(7, 12, 26, 0.90)'
+            : 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(59,158,248,0.20)',
+          boxShadow: '0 8px 32px rgba(13,27,75,0.30), 0 1px 0 rgba(255,255,255,0.06) inset',
+        }}>
+        {NAV_TABS.map(({ key, label, Icon }) => {
+          const isActive = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className="relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-300"
+              style={{
+                color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',
+                transform: isActive ? 'scale(1.12)' : 'scale(1)',
+                fontWeight: isActive ? '700' : '500',
+              }}
+            >
+              {/* Active bg pill */}
+              {isActive && (
+                <span
+                  className="absolute inset-0 rounded-xl"
+                  style={{ background: 'rgba(30,99,245,0.12)' }}
+                />
+              )}
+              <Icon
+                size={20}
+                style={{
+                  filter: isActive
+                    ? 'drop-shadow(0 0 6px rgba(59,158,248,0.7))'
+                    : 'none',
+                }}
+              />
+              <span className="text-[9px] tracking-wide z-10">{label}</span>
+              {/* Active dot */}
+              {isActive && (
+                <span
+                  className="absolute -bottom-1 w-1 h-1 rounded-full animate-ping"
+                  style={{ background: 'var(--color-primary)' }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

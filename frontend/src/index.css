@@ -2,63 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === HAMYON AI — Logo Colors: Navy #0d1b4b, Royal Blue #1e63f5, Sky Blue #3b9ef8 === */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 :root {
   color-scheme: light;
-  
-  /* Light Mode Variables */
-  --color-bg-gradient-start: #f1f5f9;  /* Slate 100 */
-  --color-bg-gradient-end: #cbd5e1;    /* Slate 300 */
-  --color-bg: #f8fafc;
-  --color-card: rgba(255, 255, 255, 0.65);
-  --color-accent: #0284c7;             /* Sky 700 */
-  --color-accent-blue: #2563eb;        /* Blue 600 */
-  --color-glass-bg: rgba(255, 255, 255, 0.65);
-  --color-glass-border: rgba(15, 23, 42, 0.12);
-  --color-glass-glow: rgba(2, 132, 199, 0.05);
 
-  --color-primary: #0284c7;
-  --color-primary-glow: rgba(2, 132, 199, 0.15);
-  --color-success: #15803d;            /* Green 700 */
-  --color-success-glow: rgba(21, 128, 61, 0.15);
-  --color-warning: #b45309;            /* Amber 700 */
-  --color-warning-glow: rgba(180, 83, 9, 0.15);
-  --color-danger: #b91c1c;             /* Red 700 */
-  --color-danger-glow: rgba(185, 28, 28, 0.15);
+  /* Light Mode — Soft Navy Blue Tints */
+  --color-bg-gradient-start: #e8eeff;
+  --color-bg-gradient-end:   #c8d8fb;
+  --color-bg:                #eef2ff;
+  --color-card:              rgba(255, 255, 255, 0.70);
+  --color-glass-bg:          rgba(255, 255, 255, 0.65);
+  --color-glass-border:      rgba(30, 99, 245, 0.15);
+  --color-glass-glow:        rgba(30, 99, 245, 0.06);
 
-  --color-text: #0f172a;               /* Slate 900 */
-  --color-muted: #475569;              /* Slate 600 */
+  --color-primary:           #1e63f5;
+  --color-primary-alt:       #3b9ef8;
+  --color-primary-glow:      rgba(30, 99, 245, 0.22);
+  --color-primary-deep:      #0d1b4b;
+
+  --color-success:           #059669;
+  --color-success-glow:      rgba(5, 150, 105, 0.18);
+  --color-warning:           #d97706;
+  --color-warning-glow:      rgba(217, 119, 6, 0.18);
+  --color-danger:            #dc2626;
+  --color-danger-glow:       rgba(220, 38, 38, 0.18);
+
+  --color-text:              #0d1b4b;
+  --color-muted:             #4b6cb7;
+  --color-accent:            #1e63f5;
+  --color-accent-blue:       #3b9ef8;
 }
 
 .dark {
   color-scheme: dark;
-  
-  /* Dark Mode Variables */
-  --color-bg-gradient-start: #141b30;
-  --color-bg-gradient-end: #060912;
-  --color-bg: #0a0d16;
-  --color-card: rgba(30, 41, 59, 0.55);
-  --color-accent: #00e5ff;
-  --color-accent-blue: #3b82f6;
-  --color-glass-bg: rgba(30, 41, 59, 0.55);
-  --color-glass-border: rgba(255, 255, 255, 0.15);
-  --color-glass-glow: rgba(0, 229, 255, 0.08);
 
-  --color-primary: #00e5ff;
-  --color-primary-glow: rgba(0, 229, 255, 0.35);
-  --color-success: #05ffb0;
-  --color-success-glow: rgba(5, 255, 176, 0.35);
-  --color-warning: #ffbb00;
-  --color-warning-glow: rgba(255, 187, 0, 0.35);
-  --color-danger: #ff1a8c;
-  --color-danger-glow: rgba(255, 26, 140, 0.35);
+  /* Dark Mode — Deep Navy Background with Electric Blue Accent */
+  --color-bg-gradient-start: #0d1630;
+  --color-bg-gradient-end:   #040810;
+  --color-bg:                #070c1a;
+  --color-card:              rgba(13, 27, 75, 0.45);
+  --color-glass-bg:          rgba(13, 27, 75, 0.40);
+  --color-glass-border:      rgba(59, 158, 248, 0.18);
+  --color-glass-glow:        rgba(30, 99, 245, 0.10);
 
-  --color-text: #ffffff;
-  --color-muted: #cbd5e1;
+  --color-primary:           #3b9ef8;
+  --color-primary-alt:       #1e63f5;
+  --color-primary-glow:      rgba(59, 158, 248, 0.40);
+  --color-primary-deep:      #0d1b4b;
+
+  --color-success:           #10b981;
+  --color-success-glow:      rgba(16, 185, 129, 0.35);
+  --color-warning:           #f59e0b;
+  --color-warning-glow:      rgba(245, 158, 11, 0.35);
+  --color-danger:            #f43f5e;
+  --color-danger-glow:       rgba(244, 63, 94, 0.35);
+
+  --color-text:              #e8f0ff;
+  --color-muted:             #7fa8d4;
+  --color-accent:            #3b9ef8;
+  --color-accent-blue:       #1e63f5;
+}
+
+/* ===== Base ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
   font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top, var(--color-bg-gradient-start) 0%, var(--color-bg-gradient-end) 100%) !important;
+  background: radial-gradient(ellipse at 20% 0%, var(--color-bg-gradient-start) 0%, var(--color-bg-gradient-end) 100%) !important;
   color: var(--color-text);
   margin: 0;
   padding: 0;
@@ -68,134 +83,190 @@ body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
-  antialiased: true;
-  transition: background 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* Custom micro-scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(120, 120, 120, 0.2);
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 120, 120, 0.4);
-}
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(59, 158, 248, 0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(59, 158, 248, 0.5); }
 
-/* Smooth layout animations */
+/* ===== Animations ===== */
 .animate-fade-in {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
 .animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-
 .animate-scale-in {
-  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
-
 .animate-glow-pulse {
-  animation: glowPulse 2s infinite ease-in-out;
+  animation: glowPulse 2.5s infinite ease-in-out;
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.90); }
+  to   { opacity: 1; transform: scale(1); }
 }
-
 @keyframes glowPulse {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(0, 229, 255, 0.45);
-  }
+  0%, 100% { box-shadow: 0 0 18px rgba(59, 158, 248, 0.25); }
+  50%       { box-shadow: 0 0 32px rgba(59, 158, 248, 0.55); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
 }
 
-/* Glassmorphism Styles (Brighter & More Vivid) */
+/* ===== Glassmorphism ===== */
 .glass {
   background: var(--color-glass-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--color-glass-border);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 8px 32px rgba(0,0,0,0.12);
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .glass-glow-primary {
-  border: 1px solid var(--color-glass-border);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 0 20px var(--color-primary-glow), 0 8px 32px rgba(0, 0, 0, 0.15);
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(59, 158, 248, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 0 28px var(--color-primary-glow),
+    0 10px 40px rgba(0,0,0,0.18);
 }
 
 .glass-glow-success {
-  border: 1px solid var(--color-glass-border);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 0 20px var(--color-success-glow), 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 22px var(--color-success-glow), 0 8px 32px rgba(0,0,0,0.15);
 }
-
 .glass-glow-danger {
-  border: 1px solid var(--color-glass-border);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 0 20px var(--color-danger-glow), 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 0 22px var(--color-danger-glow), 0 8px 32px rgba(0,0,0,0.15);
 }
 
+/* ===== Hero Card (Gradient background) ===== */
+.hero-card {
+  background: linear-gradient(135deg, #0d1b4b 0%, #1a3580 40%, #1e63f5 100%);
+  position: relative;
+  overflow: hidden;
+}
+.dark .hero-card {
+  background: linear-gradient(135deg, #060c20 0%, #0d1b4b 40%, #1a3580 100%);
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(59,158,248,0.35) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-card::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(30,99,245,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ===== Primary Button ===== */
+.btn-primary {
+  background: linear-gradient(135deg, #1e63f5 0%, #3b9ef8 100%);
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(30, 99, 245, 0.35), 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn-primary:hover  { transform: translateY(-1px) scale(1.02); box-shadow: 0 0 28px rgba(59,158,248,0.5), 0 6px 16px rgba(0,0,0,0.2); }
+.btn-primary:active { transform: scale(0.96); }
+
+/* ===== Inputs ===== */
 .glass-input {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--color-glass-border);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(59, 158, 248, 0.18);
   color: var(--color-text);
-  transition: all 0.2s ease-in-out;
+  transition: all 0.25s ease;
+  border-radius: 14px;
 }
-
-.dark .glass-input {
-  background: rgba(0, 0, 0, 0.35);
-}
-
+.dark .glass-input { background: rgba(13, 27, 75, 0.50); }
 .glass-input:focus {
+  outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 10px var(--color-primary-glow);
-  background: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(30, 99, 245, 0.18), 0 0 16px rgba(59, 158, 248, 0.20);
 }
 
-.dark .glass-input:focus {
-  background: rgba(0, 0, 0, 0.5);
+/* ===== Nav Tab Indicator ===== */
+.nav-tab-active {
+  color: var(--color-primary);
+  position: relative;
+}
+.nav-tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
 }
 
-/* Hide scrollbar utility */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+/* ===== Shimmer Progress ===== */
+.progress-shimmer {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.3) 50%,
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
 }
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+
+/* ===== Scrollbar None ===== */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ===== Chip / Badge ===== */
+.badge-blue {
+  background: rgba(30, 99, 245, 0.15);
+  border: 1px solid rgba(30, 99, 245, 0.30);
+  color: var(--color-primary);
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 10px;
+  letter-spacing: 0.05em;
 }

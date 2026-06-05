@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Trash2, Calendar, DollarSign } from 'lucide-react';
+import { Search, Trash2, TrendingDown } from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -9,18 +9,16 @@ const CATEGORIES = [
   '💊 Sog\'liq',
   '🏠 Maishiy',
   '💡 Kommunal',
-  '🎯 Boshqa'
+  '🎯 Boshqa',
 ];
 
 export default function Transactions({ fetchWithAuth }) {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [transactions, setTransactions]       = useState([]);
+  const [loading, setLoading]                 = useState(true);
+  const [searchQuery, setSearchQuery]         = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
 
-  useEffect(() => {
-    loadTransactions();
-  }, []);
+  useEffect(() => { loadTransactions(); }, []);
 
   const loadTransactions = async () => {
     try {
@@ -28,113 +26,154 @@ export default function Transactions({ fetchWithAuth }) {
       const data = await fetchWithAuth('/api/transactions');
       setTransactions(data);
     } catch (err) {
-      console.error('Tranzaksiyalarni olishda xatolik:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Ushbu tranzaksiyani o\'chirmoqchimisiz?')) return;
+    if (!confirm("O'chirilsinmi?")) return;
     try {
-      await fetchWithAuth(`/api/transactions/${id}`, {
-        method: 'DELETE'
-      });
+      await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
       loadTransactions();
-    } catch (err) {
-      console.error('O\'chirishda xatolik:', err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // Saralash va filtrlash
-  const filteredTransactions = transactions.filter(t => {
-    const matchesSearch = t.merchant.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (t.sms_raw && t.sms_raw.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'Barchasi' || t.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filtered = transactions.filter(t => {
+    const matchSearch = t.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.sms_raw && t.sms_raw.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchCat = selectedCategory === 'Barchasi' || t.category === selectedCategory;
+    return matchSearch && matchCat;
   });
 
-  const totalFilteredAmount = filteredTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+  const total = filtered.reduce((s, t) => s + Number(t.amount), 0);
 
   return (
-    <div className="pb-24 px-4 pt-5 animate-fade-in">
-      <h2 className="text-xl font-extrabold text-brand-text mb-4 tracking-tight">Tranzaksiyalar Tarixi</h2>
+    <div className="pb-28 px-4 pt-5 animate-fade-in">
 
-      {/* Qidiruv va Filtr paneli */}
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="relative">
-          <input 
-            type="text" 
-            placeholder="Do'kon yoki SMS matnidan qidirish..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full glass-input rounded-2xl pl-11 pr-4 py-3.5 text-xs text-brand-text focus:outline-none"
-          />
-          <Search size={16} className="absolute left-4 top-4 text-brand-muted" />
-        </div>
+      {/* Header */}
+      <h2 className="text-xl font-extrabold tracking-tight mb-1" style={{ color: 'var(--color-text)' }}>
+        Xarajatlar Tarixi
+      </h2>
+      <p className="text-xs mb-5" style={{ color: 'var(--color-muted)' }}>
+        Barcha kiritilgan tranzaksiyalar
+      </p>
 
-        {/* Toifalar gorizontal slayderi */}
-        <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-                selectedCategory === cat 
-                  ? 'bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 shadow-[0_0_12px_rgba(0,229,255,0.25)] scale-102' 
-                  : 'bg-slate-950/40 hover:bg-slate-900/60 text-brand-muted border border-slate-900/80 hover:text-brand-text'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      {/* Search */}
+      <div className="relative mb-4">
+        <input
+          type="text"
+          placeholder="Do'kon yoki SMS matnidan qidiring..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full glass-input pl-10 pr-4 py-3 text-xs"
+          style={{ color: 'var(--color-text)' }}
+        />
+        <Search size={15} className="absolute left-3.5 top-3.5" style={{ color: 'var(--color-muted)' }} />
       </div>
 
-      {/* Hisoblagich qismi */}
-      <div className="glass rounded-2xl p-4 mb-4 flex justify-between items-center text-xs font-semibold">
-        <span className="text-brand-muted">Saralangan tranzaksiyalar: <strong className="text-brand-text">{filteredTransactions.length} ta</strong></span>
-        <span className="text-brand-muted">Jami: <strong className="text-brand-primary text-sm font-bold">{totalFilteredAmount.toLocaleString('uz-UZ')} UZS</strong></span>
+      {/* Category chips */}
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className="px-4 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-all duration-200 active:scale-95"
+            style={
+              selectedCategory === cat
+                ? {
+                    background: 'linear-gradient(135deg, #1e63f5 0%, #3b9ef8 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 0 14px rgba(30,99,245,0.35)',
+                  }
+                : {
+                    background: 'var(--color-glass-bg)',
+                    border: '1px solid var(--color-glass-border)',
+                    color: 'var(--color-muted)',
+                  }
+            }
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
-      {/* Ro'yxat */}
+      {/* Summary bar */}
+      <div className="glass rounded-2xl px-4 py-3 mb-4 flex justify-between items-center text-xs font-semibold">
+        <span style={{ color: 'var(--color-muted)' }}>
+          Jami: <strong style={{ color: 'var(--color-text)' }}>{filtered.length} ta</strong>
+        </span>
+        <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>
+          {total.toLocaleString('uz-UZ')} UZS
+        </span>
+      </div>
+
+      {/* List */}
       {loading ? (
-        <div className="text-center py-12 text-brand-muted text-sm animate-pulse">Yuklanmoqda...</div>
-      ) : filteredTransactions.length === 0 ? (
-        <div className="glass rounded-3xl p-12 text-center text-brand-muted text-sm border border-dashed border-slate-800/80">
-          🔍 Qidiruv bo'yicha hech narsa topilmadi.
+        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
+          Yuklanmoqda...
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="glass rounded-3xl p-12 text-center text-sm"
+          style={{ color: 'var(--color-muted)', border: '1px dashed rgba(59,158,248,0.15)' }}>
+          <TrendingDown size={36} className="mx-auto mb-3 opacity-25" />
+          Hech narsa topilmadi.
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {filteredTransactions.map((t) => (
-            <div key={t.id} className="glass hover:bg-slate-900/40 border border-slate-950 hover:border-slate-800/30 rounded-2xl p-4 flex justify-between items-center transition-all duration-300 transform hover:-translate-y-0.5 shadow-md">
+        <div className="flex flex-col gap-2.5">
+          {filtered.map(t => (
+            <div
+              key={t.id}
+              className="glass rounded-2xl px-4 py-3.5 flex justify-between items-start transition-all duration-200 hover:-translate-y-0.5"
+              style={{ borderColor: 'rgba(59,158,248,0.10)' }}
+            >
               <div className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800/40 flex items-center justify-center text-lg shadow-inner shrink-0 mt-0.5">
+                {/* emoji badge */}
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 mt-0.5"
+                  style={{ background: 'rgba(30,99,245,0.10)', border: '1px solid rgba(59,158,248,0.15)' }}
+                >
                   {t.category.substring(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm text-brand-text truncate pr-2">{t.merchant}</h4>
-                  <div className="flex flex-col gap-1 mt-0.5">
-                    <span className="text-[10px] text-brand-muted">
-                      {new Date(t.date).toLocaleDateString('uz-UZ')} • {t.category.substring(3)}
+                  <h4 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
+                    {t.merchant}
+                  </h4>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                    {new Date(t.date).toLocaleDateString('uz-UZ')} · {t.category.substring(3)}
+                  </p>
+                  {t.sms_raw && (
+                    <span
+                      className="text-[9px] mt-1.5 inline-block px-2.5 py-1 rounded-lg italic leading-relaxed max-w-[200px] break-words"
+                      style={{
+                        color: 'var(--color-primary)',
+                        background: 'rgba(30,99,245,0.08)',
+                        border: '1px solid rgba(59,158,248,0.15)',
+                      }}
+                      title={t.sms_raw}
+                    >
+                      💬 {t.sms_raw.substring(0, 60)}{t.sms_raw.length > 60 ? '...' : ''}
                     </span>
-                    {t.sms_raw && (
-                      <span className="text-[9px] text-brand-primary/95 bg-brand-primary/5 border border-brand-primary/10 px-2.5 py-1.5 rounded-xl italic mt-1.5 inline-block leading-relaxed max-w-[200px] break-words" title={t.sms_raw}>
-                        💬 {t.sms_raw}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0 ml-2">
-                <span className="font-bold text-sm text-brand-text">
-                  -{Number(t.amount).toLocaleString('uz-UZ')} UZS
+              <div className="flex items-center gap-2 shrink-0 ml-2">
+                <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
+                  -{Number(t.amount).toLocaleString('uz-UZ')}
                 </span>
-                <button 
+                <button
                   onClick={() => handleDelete(t.id)}
-                  className="p-2 bg-slate-950/80 hover:bg-brand-danger/10 text-brand-muted hover:text-brand-danger border border-slate-850 rounded-xl transition-all duration-200"
+                  className="p-1.5 rounded-lg transition-all"
+                  style={{
+                    background: 'rgba(244,63,94,0.07)',
+                    border: '1px solid rgba(244,63,94,0.12)',
+                    color: 'var(--color-muted)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--color-muted)'}
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={12} />
                 </button>
               </div>
             </div>
