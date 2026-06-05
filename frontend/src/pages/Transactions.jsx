@@ -61,7 +61,7 @@ export default function Transactions({ fetchWithAuth }) {
       <h2 className="text-xl font-extrabold text-brand-text mb-4 tracking-tight">Tranzaksiyalar Tarixi</h2>
 
       {/* Qidiruv va Filtr paneli */}
-      <div className="flex flex-col gap-4.5 mb-6">
+      <div className="flex flex-col gap-4 mb-6">
         <div className="relative">
           <input 
             type="text" 
