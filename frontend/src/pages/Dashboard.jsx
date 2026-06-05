@@ -309,8 +309,8 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
 
       {/* MODAL: Tranzaksiya Qo'shish */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end justify-center p-4">
-          <div className="w-full max-w-md bg-slate-950/90 border border-slate-800/80 rounded-t-3xl rounded-b-xl p-6 animate-slide-up shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-slate-950/95 border border-slate-800/80 rounded-3xl p-6 animate-scale-in shadow-2xl">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-extrabold text-brand-text">Yangi Xarajat Qayd Etish</h3>
               <button onClick={() => setShowAddModal(false)} className="text-brand-muted hover:text-brand-text text-sm font-medium">Yopish</button>
@@ -376,8 +376,8 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
 
       {/* MODAL: Budjet Yangilash */}
       {showBudgetModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-end justify-center p-4">
-          <div className="w-full max-w-md bg-slate-950/90 border border-slate-800/80 rounded-t-3xl rounded-b-xl p-6 animate-slide-up shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-slate-950/95 border border-slate-800/80 rounded-3xl p-6 animate-scale-in shadow-2xl">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-extrabold text-brand-text">Oylik Umumiy Budjet Limitini O'rnatish</h3>
               <button onClick={() => setShowBudgetModal(false)} className="text-brand-muted hover:text-brand-text text-sm font-medium">Yopish</button>
