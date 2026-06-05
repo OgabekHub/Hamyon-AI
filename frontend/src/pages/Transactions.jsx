@@ -79,7 +79,7 @@ export default function Transactions({ fetchWithAuth }) {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4.5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
                 selectedCategory === cat 
                   ? 'bg-gradient-to-r from-brand-primary to-brand-primary/80 text-slate-950 shadow-[0_0_12px_rgba(0,229,255,0.25)] scale-102' 
                   : 'bg-slate-950/40 hover:bg-slate-900/60 text-brand-muted border border-slate-900/80 hover:text-brand-text'
