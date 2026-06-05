@@ -71,7 +71,92 @@ export function parseSMSWithRegex(smsText) {
   return null;
 }
 
-// Claude API orqali matnni tahlil qilish
+// ─── Rasm orqali chek tahlili (Claude Vision) ───────────────────────────────
+
+/**
+ * To'lov cheki yoki bank cheki rasmini Claude Vision AI orqali tahlil qiladi.
+ * @param {string} imageUrl - Telegram file URL
+ * @returns {{ amount, merchant, category, currency } | null}
+ */
+export async function parseReceiptImage(imageUrl) {
+  if (!CLAUDE_API_KEY || CLAUDE_API_KEY === 'your_claude_api_key_here') {
+    console.log('Claude API Key topilmadi. Rasm tahlil qilib bo\'lmadi.');
+    return null;
+  }
+
+  try {
+    // 1. Rasmni URL dan yuklab olish (buffer)
+    const imgResponse = await fetch(imageUrl);
+    if (!imgResponse.ok) throw new Error('Rasmni yuklab bo\'lishda xatolik');
+
+    const arrayBuffer = await imgResponse.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString('base64');
+
+    // Content-type aniqlash
+    const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+
+    // 2. Claude Vision API ga yuborish
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 300,
+        system: `You are a financial assistant for Uzbekistan. 
+Analyze receipt/payment check images and extract transaction data.
+Return ONLY valid JSON (no markdown, no explanation):
+{"amount": number, "merchant": string, "category": string, "currency": "UZS"}
+
+Category must be one of: "🛒 Oziq-ovqat", "🚗 Transport", "🍕 Restoran", "💊 Sog'liq", "🏠 Maishiy", "💡 Kommunal", "🎯 Boshqa"
+
+If you cannot extract amount from the image, return: {"amount": 0, "merchant": "Noma'lum", "category": "🎯 Boshqa", "currency": "UZS"}`,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: contentType,
+                  data: base64Image,
+                },
+              },
+              {
+                type: 'text',
+                text: 'Bu to\'lov cheki yoki bank cheki rasmidan tranzaksiya ma\'lumotlarini (summa, do\'kon/joy, toifa) JSON formatida ajratib ber. Summani UZS da yoz.',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`Claude Vision API xatolik: ${response.status} — ${errBody}`);
+    }
+
+    const data = await response.json();
+    const replyText = data.content[0].text.trim();
+
+    // JSON ni tozalash
+    const jsonMatch = replyText.match(/\{[\s\S]*?\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(replyText);
+  } catch (error) {
+    console.error('Rasm tahlil qilishda xatolik:', error.message);
+    return null;
+  }
+}
+
+// ─── Claude API orqali matnni tahlil qilish ─────────────────────────────────
 export async function parseSMSWithAI(smsText) {
   if (!CLAUDE_API_KEY) {
     console.log('Claude API Key topilmadi. Regex tahlilidan foydalanilmoqda...');

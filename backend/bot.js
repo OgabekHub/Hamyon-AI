@@ -1,6 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import { supabase } from './db.js';
-import { parseSMSWithAI, generateAIInsights } from './ai.js';
+import { parseSMSWithAI, generateAIInsights, parseReceiptImage } from './ai.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -78,6 +78,8 @@ export function startBot() {
         `/report — Sun'iy intellektdan (AI) haftalik moliyaviy hisobot olish\n\n` +
         `📲 *Bank SMS-larini tahlil qilish:*\n` +
         `Uzcard, Humo yoki Kapitalbank SMS-larini menga yuboring (forward qiling). Men ularni avtomatik o'qib, tranzaksiyaga qo'shaman!\n\n` +
+        `📸 *To'lov cheki rasmini yuborish:*\n` +
+        `Do'kon yoki restorandan olgan chek rasmini menga yuboring! AI uni o'qib, xarajatni avtomatik qo'shadi.\n\n` +
         `👇 Moliyaviy boshqaruv panelini ochish uchun quyidagi tugmani bosing:`;
 
       const options = {
@@ -271,7 +273,108 @@ export function startBot() {
       bot.sendMessage(chatID, `🤖 *Hamyon AI maslahatlari:*\n\n${insightText}`, { parse_mode: 'Markdown' });
     });
 
-    // Matnli xabarlar va SMS forwardlar
+    // ── 📸 RASM HANDLER: To'lov cheki va bank cheklari ──────────────────────
+    bot.on('photo', async (msg) => {
+      const chatID = msg.chat.id;
+      const tgUser = msg.from;
+
+      // Eng yuqori sifatli rasmni olish (oxirgisi — eng katta)
+      const photos = msg.photo;
+      const bestPhoto = photos[photos.length - 1];
+
+      try {
+        await bot.sendMessage(chatID,
+          '📸 _Rasm qabul qilindi. AI chekni tahlil qilmoqda... Iltimos kuting._',
+          { parse_mode: 'Markdown' }
+        );
+
+        // Telegram file URL ni olish
+        const fileInfo = await bot.getFile(bestPhoto.file_id);
+        const fileUrl = `https://api.telegram.org/file/bot${token}/${fileInfo.file_path}`;
+
+        const user = await getOrCreateUser(tgUser);
+        if (!user) return;
+
+        // Claude Vision bilan tahlil
+        const parsedData = await parseReceiptImage(fileUrl);
+
+        if (parsedData && parsedData.amount > 0) {
+          const { amount, merchant, category } = parsedData;
+
+          // Tranzaksiyani saqlash
+          const caption = msg.caption || '';
+          const { error: insertError } = await supabase
+            .from('transactions')
+            .insert([{
+              user_id: user.id,
+              amount,
+              merchant,
+              category,
+              sms_raw: caption ? `📸 Rasm cheki: ${caption}` : '📸 Rasm cheki orqali kiritildi',
+              date: new Date().toISOString()
+            }]);
+
+          if (insertError) {
+            console.error('Rasm tranzaksiyasini saqlashda xatolik:', insertError);
+            return bot.sendMessage(chatID, '❌ Tranzaksiyani saqlashda xatolik yuz berdi.');
+          }
+
+          // Tasdiqlash xabari
+          const confirmMsg =
+            `✅ *Chek muvaffaqiyatli tahlil qilindi!*\n\n` +
+            `💰 Summa: *${amount.toLocaleString('uz-UZ')} UZS*\n` +
+            `🛒 Joy: *${merchant}*\n` +
+            `📁 Toifa: *${category}*\n` +
+            `📅 Sana: *${new Date().toLocaleDateString('uz-UZ')}*\n\n` +
+            `_Xarajat dashboardga qo'shildi!_ 📊`;
+
+          await bot.sendMessage(chatID, confirmMsg, { parse_mode: 'Markdown' });
+
+          // Budjet limitini tekshirish
+          const startOfMonth = new Date();
+          startOfMonth.setDate(1);
+          startOfMonth.setHours(0, 0, 0, 0);
+
+          const { data: monthlyTransactions } = await supabase
+            .from('transactions')
+            .select('amount')
+            .eq('user_id', user.id)
+            .gte('date', startOfMonth.toISOString());
+
+          const totalSpent = (monthlyTransactions || []).reduce((s, t) => s + Number(t.amount), 0);
+
+          if (user.monthly_budget > 0 && totalSpent > user.monthly_budget) {
+            setTimeout(() => {
+              bot.sendMessage(chatID,
+                `⚠️ *DIQQAT! Oylik budjet limitingiz oshib ketdi!*\n` +
+                `Sarflangan: *${totalSpent.toLocaleString('uz-UZ')} UZS* / Limit: *${Number(user.monthly_budget).toLocaleString('uz-UZ')} UZS*`,
+                { parse_mode: 'Markdown' }
+              );
+            }, 1000);
+          }
+
+        } else {
+          // Claude Vision chekdan ma'lumot topib bermadi
+          await bot.sendMessage(chatID,
+            `❌ *Chekdan ma'lumot topib bo'lmadi.*\n\n` +
+            `Buning sabablari:\n` +
+            `• Rasm sifati past yoki xiralashgan\n` +
+            `• Chekdagi yozuvlar ko'rinmayapti\n` +
+            `• Bu to'lov cheki bo'lmasligi mumkin\n\n` +
+            `💡 *Nima qilish mumkin:*\n` +
+            `1. Rasmni aniqroq (fokusda) qayta oling\n` +
+            `2. Chek matnini botga yozing yoki forward qiling\n` +
+            `3. Dashboard orqali qo'lda kiriting`,
+            { parse_mode: 'Markdown' }
+          );
+        }
+      } catch (err) {
+        console.error('Photo handler xatolik:', err);
+        bot.sendMessage(chatID, '❌ Rasmni qayta ishlashda texnik xatolik yuz berdi. Iltimos keyinroq urinib ko\'ring.');
+      }
+    });
+
+    // ── 💬 MATNLI XABARLAR VA SMS FORWARDLAR ─────────────────────────────────
     bot.on('message', async (msg) => {
       // Agar xabar buyruq bo'lsa, uni yuborgan command handlerlar o'zi javob beradi
       if (msg.text && msg.text.startsWith('/')) return;
