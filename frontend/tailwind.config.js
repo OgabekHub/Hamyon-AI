@@ -8,18 +8,18 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: '#05070c',        // O'ta to'q ko'k / qora fon
-          card: 'rgba(13, 19, 33, 0.45)', // Shaffof glass-card asosi
-          primary: '#00e5ff',   // Neon Cyan
-          primaryGlow: 'rgba(0, 229, 255, 0.25)',
-          success: '#05ffb0',   // Neon Emerald yashil
-          successGlow: 'rgba(5, 255, 176, 0.25)',
-          warning: '#ffaa00',   // Oltin rang / ogohlantirish
-          warningGlow: 'rgba(255, 170, 0, 0.25)',
-          danger: '#ff007f',    // Pushti-qizil / Electric Rose
-          dangerGlow: 'rgba(255, 0, 127, 0.25)',
-          text: '#f8fafc',      // Oqish matn
-          muted: '#8f9cae'      // Kulrang matn
+          bg: '#0a0d16',        // Lighter, richer dark slate background
+          card: 'rgba(30, 41, 59, 0.55)', // Brighter, more solid glass card backdrop
+          primary: '#00e5ff',   // Vibrant Neon Cyan
+          primaryGlow: 'rgba(0, 229, 255, 0.35)',
+          success: '#05ffb0',   // Vibrant Neon Emerald
+          successGlow: 'rgba(5, 255, 176, 0.35)',
+          warning: '#ffbb00',   // Lighter Gold / Orange warning
+          warningGlow: 'rgba(255, 187, 0, 0.35)',
+          danger: '#ff1a8c',    // Brighter Electric Rose
+          dangerGlow: 'rgba(255, 26, 140, 0.35)',
+          text: '#ffffff',      // Crisp pure white text
+          muted: '#cbd5e1'      // Brighter Slate 300 for high-contrast reading
         }
       },
       fontFamily: {
