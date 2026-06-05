@@ -34,14 +34,17 @@ export function useTelegram() {
       }
     }
 
-    // Dev Fallback
-    const devUserId = 123456789;
+    // Dev Fallback (Lokal brauzerda test qilish)
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryTelegramId = urlParams.get('telegram_id');
+    const devUserId = queryTelegramId ? parseInt(queryTelegramId) : 123456789;
+    
     setUser({
       id: devUserId,
-      name: 'Jasur (Lokal)',
+      name: queryTelegramId ? 'Jasur' : 'Jasur (Lokal)',
       username: 'jasur_dev',
     });
-    setInitData(`query_id=mock&user=${encodeURIComponent(JSON.stringify({ id: devUserId, first_name: 'Jasur', username: 'jasur_dev' }))}&auth_date=12345&hash=mock`);
+    setInitData(`query_id=mock&user=${encodeURIComponent(JSON.stringify({ id: devUserId, first_name: queryTelegramId ? 'Jasur' : 'Jasur', username: 'jasur_dev' }))}&auth_date=12345&hash=mock`);
     setLoading(false);
   }, []);
 

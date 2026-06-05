@@ -280,17 +280,23 @@ export function startBot() {
       const text = msg.text || msg.caption;
       if (!text) return;
 
-      // SMS bo'lishi mumkin bo'lgan kalit so'zlarni tekshirish
+      // SMS yoki oddiy xarajat matni bo'lishi mumkin bo'lgan kalit so'zlarni tekshirish
       const isSMS = text.toLowerCase().includes('uzcard') ||
                     text.toLowerCase().includes('humo') ||
                     text.toLowerCase().includes('to\'lov') ||
                     text.toLowerCase().includes('savdo') ||
                     text.toLowerCase().includes('balans') ||
                     text.toLowerCase().includes('qoldiq') ||
-                    text.toLowerCase().includes('to\'landi');
+                    text.toLowerCase().includes('to\'landi') ||
+                    text.toLowerCase().includes('so\'m') ||
+                    text.toLowerCase().includes('som') ||
+                    text.toLowerCase().includes('uzs') ||
+                    text.toLowerCase().includes('ketdi') ||
+                    text.toLowerCase().includes('xarajat') ||
+                    /\d+/.test(text);
 
       if (isSMS) {
-        bot.sendMessage(chatID, '🔍 _Bank SMS matni aniqlandi. AI uni tahlil qilmoqda..._', { parse_mode: 'Markdown' });
+        bot.sendMessage(chatID, '🔍 _Xabar matni aniqlandi. AI uni tahlil qilmoqda..._', { parse_mode: 'Markdown' });
 
         const tgUser = msg.from;
         const user = await getOrCreateUser(tgUser);
@@ -389,8 +395,17 @@ export function startBot() {
           }
 
         } else {
-          bot.sendMessage(chatID, "❌ Kechirasiz, SMS matnidan tranzaksiya ma'lumotlarini aniqlab bo'lmadi.");
+          bot.sendMessage(chatID, "❌ Kechirasiz, ushbu matndan tranzaksiya ma'lumotlarini aniqlab bo'lmadi.");
         }
+      } else {
+        const guidanceMsg = `⚠️ *Kechirasiz, bu xabar bank SMS-xabariga yoki xarajat qaydiga o'xshamaydi.*\n\n` +
+          `Men banklardan keladigan SMS-xabarlarni yoki oddiy yozilgan xarajatlarni (masalan: *“Transportga 15000 so'm ketdi”*) avtomat tahlil qila olaman.\n\n` +
+          `💡 *Siz nima qila olasiz:*\n` +
+          `1. Bankdan kelgan to'liq SMS matnini yo'naltiring (forward qiling).\n` +
+          `2. Oddiy xarajat yozsangiz, unda albatta summa (raqamlar bilan) va kalit so'zlar bo'lishi kerak.\n` +
+          `3. Yoki pastdagi *Hamyon AI Dashboard* tugmasini bosing va xarajatni Mini Ilova orqali qo'lda qo'shing.`;
+        
+        bot.sendMessage(chatID, guidanceMsg, { parse_mode: 'Markdown' });
       }
     });
 
