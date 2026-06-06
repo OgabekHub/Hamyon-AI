@@ -73,8 +73,8 @@ export default function App() {
           borderBottom: '1px solid rgba(59,158,248,0.12)',
           backdropFilter: 'blur(12px)',
         }}>
-        <div className="flex items-center gap-2.5">
-          <img src={logoImg} alt="Hamyon AI Logo" className="h-8 w-auto object-contain" />
+        <div className="flex items-center gap-2">
+          <img src={logoImg} alt="Hamyon AI Logo" className="h-7 w-auto object-contain" style={{ position: 'relative', top: '-1.5px' }} />
           <span className="text-sm font-black tracking-widest uppercase"
             style={{ color: 'var(--color-primary)' }}>
             Hamyon AI
