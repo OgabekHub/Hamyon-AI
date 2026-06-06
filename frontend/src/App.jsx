@@ -319,10 +319,9 @@ export default function App() {
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className="relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-300"
+              className="relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-300 active:scale-95"
               style={{
                 color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',
-                transform: isActive ? 'scale(1.12)' : 'scale(1)',
                 fontWeight: isActive ? '700' : '500',
               }}
             >
@@ -333,21 +332,28 @@ export default function App() {
                   style={{ background: 'rgba(30,99,245,0.12)' }}
                 />
               )}
-              <Icon
-                size={20}
+              <div
+                className="transition-transform duration-300"
                 style={{
-                  filter: isActive
-                    ? 'drop-shadow(0 0 6px rgba(59,158,248,0.7))'
-                    : 'none',
+                  transform: isActive ? 'translateY(-3px)' : 'translateY(0)',
                 }}
-              />
+              >
+                <Icon
+                  size={20}
+                  style={{
+                    filter: isActive
+                      ? 'drop-shadow(0 0 6px rgba(59,158,248,0.7))'
+                      : 'none',
+                  }}
+                />
+              </div>
               <span className="text-[9px] tracking-wide z-10">{label}</span>
               {/* Active dot */}
               {isActive && (
-                <span
-                  className="absolute -bottom-1 w-1 h-1 rounded-full animate-ping"
-                  style={{ background: 'var(--color-primary)' }}
-                />
+                <span className="absolute bottom-0 flex h-1 w-1 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--color-primary)' }}></span>
+                  <span className="relative inline-flex rounded-full h-1 w-1" style={{ background: 'var(--color-primary)' }}></span>
+                </span>
               )}
             </button>
           );
