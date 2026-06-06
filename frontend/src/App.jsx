@@ -40,10 +40,7 @@ export default function App() {
         style={{ background: 'radial-gradient(ellipse at 20% 0%, #0d1630 0%, #040810 100%)' }}>
         {/* Animated logo/spinner */}
         <div className="relative mb-6">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center glass shadow-glow-primary">
-            <img src={logoImg} alt="Hamyon AI Logo" className="w-12 h-12 object-contain p-0.5 animate-float" />
-          </div>
-          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/30 animate-ping pointer-events-none" />
+          <img src={logoImg} alt="Hamyon AI Logo" className="h-16 w-auto object-contain animate-float" />
         </div>
         <p className="text-sm font-bold tracking-widest uppercase"
           style={{ color: '#3b9ef8' }}>
@@ -76,10 +73,8 @@ export default function App() {
           borderBottom: '1px solid rgba(59,158,248,0.12)',
           backdropFilter: 'blur(12px)',
         }}>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center glass shadow-glow-primary p-0.5">
-            <img src={logoImg} alt="Hamyon AI Logo" className="w-full h-full object-contain" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <img src={logoImg} alt="Hamyon AI Logo" className="h-8 w-auto object-contain" />
           <span className="text-sm font-black tracking-widest uppercase"
             style={{ color: 'var(--color-primary)' }}>
             Hamyon AI
