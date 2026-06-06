@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export default function BottomSheet({ isOpen, onClose, title, children }) {
@@ -16,7 +17,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
 
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
       {/* Backdrop */}
       <div 
@@ -26,7 +27,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
       
       {/* Sheet Container */}
       <div 
-        className="relative w-full max-w-md glass rounded-t-[28px] px-5 pb-8 pt-3 border-t border-[rgba(59,158,248,0.20)] shadow-[0_-8px_32px_rgba(13,27,75,0.40)] pointer-events-auto animate-slide-up"
+        className="relative w-full max-w-md glass rounded-t-[28px] px-5 pb-8 pt-3 border-t border-[rgba(59,158,248,0.20)] shadow-[0_-8px_32px_rgba(13,27,75,0.40)] pointer-events-auto animate-slide-up z-50"
         style={{ background: 'var(--color-bg)', maxHeight: '90vh', overflowY: 'auto' }}
       >
         {/* Drag Handle indicator */}
@@ -59,4 +60,6 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }
