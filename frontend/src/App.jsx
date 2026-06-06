@@ -6,6 +6,7 @@ import Budget from './pages/Budget';
 import Debts from './pages/Debts';
 import AIReport from './pages/AIReport';
 import { LayoutDashboard, History, Target, BookOpen, Sparkles, Sun, Moon, Wallet } from 'lucide-react';
+import logoImg from './assets/logo.png';
 
 const NAV_TABS = [
   { key: 'home',         label: 'Bosh',     Icon: LayoutDashboard },
@@ -39,11 +40,10 @@ export default function App() {
         style={{ background: 'radial-gradient(ellipse at 20% 0%, #0d1630 0%, #040810 100%)' }}>
         {/* Animated logo/spinner */}
         <div className="relative mb-6">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #0d1b4b 0%, #1e63f5 100%)' }}>
-            <Wallet size={30} className="text-white" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center glass shadow-glow-primary">
+            <img src={logoImg} alt="Hamyon AI Logo" className="w-12 h-12 object-contain p-0.5 animate-float" />
           </div>
-          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/30 animate-ping" />
+          <div className="absolute inset-0 rounded-2xl border-2 border-blue-400/30 animate-ping pointer-events-none" />
         </div>
         <p className="text-sm font-bold tracking-widest uppercase"
           style={{ color: '#3b9ef8' }}>
@@ -76,11 +76,9 @@ export default function App() {
           borderBottom: '1px solid rgba(59,158,248,0.12)',
           backdropFilter: 'blur(12px)',
         }}>
-        {/* Logo wordmark */}
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-glow-primary"
-            style={{ background: 'linear-gradient(135deg, #0d1b4b 0%, #1e63f5 100%)' }}>
-            <Wallet size={14} className="text-white" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center glass shadow-glow-primary p-0.5">
+            <img src={logoImg} alt="Hamyon AI Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-sm font-black tracking-widest uppercase"
             style={{ color: 'var(--color-primary)' }}>
