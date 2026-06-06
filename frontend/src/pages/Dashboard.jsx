@@ -18,10 +18,7 @@ function fmt(n) {
   return String(n);
 }
 
-export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
-  const [transactions, setTransactions] = useState([]);
-  const [userData, setUserData]         = useState(user);
-  const [loading, setLoading]           = useState(true);
+export default function Dashboard({ fetchWithAuth, user, setActiveTab, transactions, userData, refreshTransactions, refreshProfile }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
 
@@ -30,23 +27,9 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
   const [category,  setCategory]  = useState(CATEGORIES[0].name);
   const [newBudget, setNewBudget] = useState('');
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [txs, profile] = await Promise.all([
-        fetchWithAuth('/api/transactions'),
-        fetchWithAuth('/api/auth'),
-      ]);
-      setTransactions(txs);
-      setUserData(profile);
-      setNewBudget(profile.monthly_budget || '');
-    } catch (err) {
-      console.error('Yuklash xatoligi:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleOpenBudgetModal = () => {
+    setNewBudget(userData?.monthly_budget || '');
+    setShowBudgetModal(true);
   };
 
   const handleAddTransaction = async (e) => {
@@ -59,7 +42,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
       });
       setShowAddModal(false);
       setAmount(''); setMerchant(''); setCategory(CATEGORIES[0].name);
-      loadData();
+      refreshTransactions();
     } catch { alert("Qo'shib bo'lmadi"); }
   };
 
@@ -71,7 +54,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
         body: JSON.stringify({ monthly_budget: parseFloat(newBudget) || 0 }),
       });
       setShowBudgetModal(false);
-      loadData();
+      refreshProfile();
     } catch (err) { console.error(err); }
   };
 
@@ -79,7 +62,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
     if (!confirm("O'chirilsinmi?")) return;
     try {
       await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
-      loadData();
+      refreshTransactions();
     } catch (err) { console.error(err); }
   };
 
@@ -141,7 +124,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
             </div>
           </div>
           <button
-            onClick={() => setShowBudgetModal(true)}
+            onClick={handleOpenBudgetModal}
             className="p-2 rounded-xl transition-all duration-200 active:scale-90"
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
             title="Budjetni tahrirlash"
@@ -182,7 +165,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab }) {
             style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)' }}>
             <span className="text-blue-100/70">Oylik budjet belgilanmagan</span>
             <button
-              onClick={() => setShowBudgetModal(true)}
+              onClick={handleOpenBudgetModal}
               className="font-bold text-white underline"
             >
               Belgilash

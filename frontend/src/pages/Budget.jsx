@@ -11,27 +11,9 @@ const CATEGORIES = [
   { name: '🎯 Boshqa',    color: '#64748b' },
 ];
 
-export default function Budget({ fetchWithAuth }) {
-  const [budgets, setBudgets]           = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading]           = useState(true);
+export default function Budget({ fetchWithAuth, budgets, transactions, refreshBudgets }) {
   const [editingCategory, setEditingCategory] = useState(null);
   const [limitInput, setLimitInput]     = useState('');
-
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [budgetsData, txsData] = await Promise.all([
-        fetchWithAuth('/api/budgets'),
-        fetchWithAuth('/api/transactions'),
-      ]);
-      setBudgets(budgetsData);
-      setTransactions(txsData);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
 
   const handleSaveLimit = async (categoryName) => {
     const limitAmount = parseFloat(limitInput);
@@ -43,7 +25,7 @@ export default function Budget({ fetchWithAuth }) {
       });
       setEditingCategory(null);
       setLimitInput('');
-      loadData();
+      refreshBudgets();
     } catch (err) { console.error(err); }
   };
 
@@ -72,11 +54,6 @@ export default function Budget({ fetchWithAuth }) {
         Toifalar bo'yicha oylik limitlarni belgilang
       </p>
 
-      {loading ? (
-        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
-          Yuklanmoqda...
-        </div>
-      ) : (
         <div className="flex flex-col gap-3.5">
           {CATEGORIES.map(({ name: cat, color }) => {
             const spent     = categorySpentMap[cat] || 0;
@@ -212,7 +189,6 @@ export default function Budget({ fetchWithAuth }) {
             );
           })}
         </div>
-      )}
     </div>
   );
 }

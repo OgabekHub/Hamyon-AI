@@ -17,9 +17,107 @@ const NAV_TABS = [
 ];
 
 export default function App() {
-  const { user, loading, fetchWithAuth } = useTelegram();
+  const { user, loading: tgLoading, fetchWithAuth } = useTelegram();
   const [activeTab, setActiveTab] = useState('home');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  // Global States
+  const [profile, setProfile] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [debts, setDebts] = useState([]);
+  const [insight, setInsight] = useState(null);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Parallel Loader
+  const loadAllData = async () => {
+    try {
+      setDataLoading(true);
+      const [profileData, txsData, budgetsData, debtsData, insightData] = await Promise.all([
+        fetchWithAuth('/api/auth').catch(err => {
+          console.warn("Auth fetch failed:", err);
+          return { id: 'dev-user-uuid-1234', telegram_id: user?.id || 123456789, name: user?.name || 'Jasur', monthly_budget: 5000000, currency: 'UZS' };
+        }),
+        fetchWithAuth('/api/transactions').catch(err => {
+          console.warn("Transactions fetch failed:", err);
+          return [];
+        }),
+        fetchWithAuth('/api/budgets').catch(err => {
+          console.warn("Budgets fetch failed:", err);
+          return [];
+        }),
+        fetchWithAuth('/api/debts').catch(err => {
+          console.warn("Debts fetch failed:", err);
+          return [];
+        }),
+        fetchWithAuth('/api/insights').catch(err => {
+          console.warn("Insights fetch failed:", err);
+          return null;
+        }),
+      ]);
+      setProfile(profileData);
+      setTransactions(txsData);
+      setBudgets(budgetsData);
+      setDebts(debtsData);
+      setInsight(insightData);
+    } catch (err) {
+      console.error("Critical error loading app data:", err);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadAllData();
+    }
+  }, [user]);
+
+  // Refresh functions for mutations
+  const refreshTransactions = async () => {
+    try {
+      const data = await fetchWithAuth('/api/transactions');
+      setTransactions(data);
+    } catch (err) {
+      console.error("Failed to refresh transactions:", err);
+    }
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const data = await fetchWithAuth('/api/auth');
+      setProfile(data);
+    } catch (err) {
+      console.error("Failed to refresh profile:", err);
+    }
+  };
+
+  const refreshBudgets = async () => {
+    try {
+      const data = await fetchWithAuth('/api/budgets');
+      setBudgets(data);
+    } catch (err) {
+      console.error("Failed to refresh budgets:", err);
+    }
+  };
+
+  const refreshDebts = async () => {
+    try {
+      const data = await fetchWithAuth('/api/debts');
+      setDebts(data);
+    } catch (err) {
+      console.error("Failed to refresh debts:", err);
+    }
+  };
+
+  const refreshInsight = async () => {
+    try {
+      const data = await fetchWithAuth('/api/insights');
+      setInsight(data);
+    } catch (err) {
+      console.error("Failed to refresh insight:", err);
+    }
+  };
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -34,7 +132,7 @@ export default function App() {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
-  if (loading) {
+  if (tgLoading || dataLoading) {
     return (
       <div className="w-full min-h-screen flex flex-col items-center justify-center"
         style={{ background: 'radial-gradient(ellipse at 20% 0%, #0d1630 0%, #040810 100%)' }}>
@@ -53,12 +151,63 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'home':         return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
-      case 'transactions': return <Transactions fetchWithAuth={fetchWithAuth} />;
-      case 'budget':       return <Budget fetchWithAuth={fetchWithAuth} />;
-      case 'debts':        return <Debts fetchWithAuth={fetchWithAuth} />;
-      case 'ai_report':    return <AIReport fetchWithAuth={fetchWithAuth} />;
-      default:             return <Dashboard fetchWithAuth={fetchWithAuth} user={user} setActiveTab={setActiveTab} />;
+      case 'home':
+        return (
+          <Dashboard
+            fetchWithAuth={fetchWithAuth}
+            user={user}
+            setActiveTab={setActiveTab}
+            transactions={transactions}
+            userData={profile}
+            refreshTransactions={refreshTransactions}
+            refreshProfile={refreshProfile}
+          />
+        );
+      case 'transactions':
+        return (
+          <Transactions
+            fetchWithAuth={fetchWithAuth}
+            transactions={transactions}
+            refreshTransactions={refreshTransactions}
+          />
+        );
+      case 'budget':
+        return (
+          <Budget
+            fetchWithAuth={fetchWithAuth}
+            budgets={budgets}
+            transactions={transactions}
+            refreshBudgets={refreshBudgets}
+          />
+        );
+      case 'debts':
+        return (
+          <Debts
+            fetchWithAuth={fetchWithAuth}
+            debts={debts}
+            refreshDebts={refreshDebts}
+          />
+        );
+      case 'ai_report':
+        return (
+          <AIReport
+            fetchWithAuth={fetchWithAuth}
+            insight={insight}
+            refreshInsight={refreshInsight}
+          />
+        );
+      default:
+        return (
+          <Dashboard
+            fetchWithAuth={fetchWithAuth}
+            user={user}
+            setActiveTab={setActiveTab}
+            transactions={transactions}
+            userData={profile}
+            refreshTransactions={refreshTransactions}
+            refreshProfile={refreshProfile}
+          />
+        );
     }
   };
 

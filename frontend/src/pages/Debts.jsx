@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Trash2, ArrowUpRight, ArrowDownLeft, Calendar, User, Undo2, X, BookOpen } from 'lucide-react';
 
-export default function Debts({ fetchWithAuth }) {
-  const [debts, setDebts]           = useState([]);
-  const [loading, setLoading]       = useState(true);
+export default function Debts({ fetchWithAuth, debts, refreshDebts }) {
   const [activeTab, setActiveTab]   = useState('owed');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -11,17 +9,6 @@ export default function Debts({ fetchWithAuth }) {
   const [amount, setAmount]         = useState('');
   const [type, setType]             = useState('owed');
   const [dueDate, setDueDate]       = useState('');
-
-  useEffect(() => { loadDebts(); }, []);
-
-  const loadDebts = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchWithAuth('/api/debts');
-      setDebts(data);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
 
   const handleAddDebt = async (e) => {
     e.preventDefault();
@@ -33,14 +20,14 @@ export default function Debts({ fetchWithAuth }) {
       });
       setShowAddModal(false);
       setPersonName(''); setAmount(''); setType('owed'); setDueDate('');
-      loadDebts();
+      refreshDebts();
     } catch (err) { console.error(err); }
   };
 
   const handleTogglePaid = async (id, isPaid) => {
     try {
       await fetchWithAuth(`/api/debts/${id}`, { method: 'PATCH', body: JSON.stringify({ is_paid: !isPaid }) });
-      loadDebts();
+      refreshDebts();
     } catch (err) { console.error(err); }
   };
 
@@ -48,7 +35,7 @@ export default function Debts({ fetchWithAuth }) {
     if (!confirm("O'chirilsinmi?")) return;
     try {
       await fetchWithAuth(`/api/debts/${id}`, { method: 'DELETE' });
-      loadDebts();
+      refreshDebts();
     } catch (err) { console.error(err); }
   };
 
@@ -136,11 +123,7 @@ export default function Debts({ fetchWithAuth }) {
       </div>
 
       {/* Debt list */}
-      {loading ? (
-        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
-          Yuklanmoqda...
-        </div>
-      ) : currentUnpaid.length === 0 && currentPaid.length === 0 ? (
+      {currentUnpaid.length === 0 && currentPaid.length === 0 ? (
         <div className="glass rounded-3xl p-12 text-center text-sm"
           style={{ color: 'var(--color-muted)', border: '1px dashed rgba(59,158,248,0.15)' }}>
           📓 Bu ro'yxatda qarzlar mavjud emas.

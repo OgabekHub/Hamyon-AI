@@ -9,13 +9,9 @@ const LOADER_MESSAGES = [
   "💡 Maxsus tejash maslahatlarini yozmoqda...",
 ];
 
-export default function AIReport({ fetchWithAuth }) {
-  const [insight, setInsight]           = useState(null);
-  const [loading, setLoading]           = useState(true);
+export default function AIReport({ fetchWithAuth, insight, refreshInsight }) {
   const [generating, setGenerating]     = useState(false);
   const [loaderMessage, setLoaderMessage] = useState(LOADER_MESSAGES[0]);
-
-  useEffect(() => { loadInsight(); }, []);
 
   useEffect(() => {
     let iv;
@@ -26,21 +22,12 @@ export default function AIReport({ fetchWithAuth }) {
     return () => clearInterval(iv);
   }, [generating]);
 
-  const loadInsight = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchWithAuth('/api/insights');
-      setInsight(data);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  };
-
   const handleGenerate = async () => {
     try {
       setGenerating(true);
       setLoaderMessage(LOADER_MESSAGES[0]);
-      const data = await fetchWithAuth('/api/insights/generate', { method: 'POST' });
-      setInsight(data);
+      await fetchWithAuth('/api/insights/generate', { method: 'POST' });
+      await refreshInsight();
     } catch {
       alert("AI hisobot tayyorlashda xatolik. Keyinroq urinib ko'ring.");
     } finally {
@@ -83,11 +70,7 @@ export default function AIReport({ fetchWithAuth }) {
       </div>
 
       {/* States */}
-      {loading ? (
-        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
-          Yuklanmoqda...
-        </div>
-      ) : generating ? (
+      {generating ? (
         <div className="glass rounded-3xl p-6 py-16 text-center flex flex-col items-center gap-5"
           style={{ border: '1px solid rgba(59,158,248,0.15)' }}>
           {/* Custom spinner */}

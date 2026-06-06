@@ -12,31 +12,15 @@ const CATEGORIES = [
   '🎯 Boshqa',
 ];
 
-export default function Transactions({ fetchWithAuth }) {
-  const [transactions, setTransactions]       = useState([]);
-  const [loading, setLoading]                 = useState(true);
+export default function Transactions({ fetchWithAuth, transactions, refreshTransactions }) {
   const [searchQuery, setSearchQuery]         = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
-
-  useEffect(() => { loadTransactions(); }, []);
-
-  const loadTransactions = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchWithAuth('/api/transactions');
-      setTransactions(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDelete = async (id) => {
     if (!confirm("O'chirilsinmi?")) return;
     try {
       await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
-      loadTransactions();
+      refreshTransactions();
     } catch (err) { console.error(err); }
   };
 
@@ -110,11 +94,7 @@ export default function Transactions({ fetchWithAuth }) {
       </div>
 
       {/* List */}
-      {loading ? (
-        <div className="text-center py-16 text-sm animate-pulse" style={{ color: 'var(--color-muted)' }}>
-          Yuklanmoqda...
-        </div>
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="glass rounded-3xl p-12 text-center text-sm"
           style={{ color: 'var(--color-muted)', border: '1px dashed rgba(59,158,248,0.15)' }}>
           <TrendingDown size={36} className="mx-auto mb-3 opacity-25" />
