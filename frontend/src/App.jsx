@@ -322,18 +322,20 @@ export default function App() {
               className="relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-300 active:scale-95"
               style={{
                 color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',
-                fontWeight: isActive ? '700' : '500',
+                fontWeight: '600',
               }}
             >
-              {/* Active bg pill */}
-              {isActive && (
-                <span
-                  className="absolute inset-0 rounded-xl"
-                  style={{ background: 'rgba(30,99,245,0.12)' }}
-                />
-              )}
+              {/* Active bg pill with smooth opacity transition */}
+              <span
+                className="absolute inset-0 rounded-xl transition-opacity duration-300"
+                style={{ 
+                  background: 'rgba(30,99,245,0.12)',
+                  opacity: isActive ? 1 : 0,
+                  pointerEvents: 'none'
+                }}
+              />
               <div
-                className="transition-transform duration-300"
+                className="transition-transform duration-300 ease-out"
                 style={{
                   transform: isActive ? 'translateY(-3px)' : 'translateY(0)',
                 }}
@@ -348,13 +350,17 @@ export default function App() {
                 />
               </div>
               <span className="text-[9px] tracking-wide z-10">{label}</span>
-              {/* Active dot */}
-              {isActive && (
-                <span className="absolute bottom-0 flex h-1 w-1 items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--color-primary)' }}></span>
-                  <span className="relative inline-flex rounded-full h-1 w-1" style={{ background: 'var(--color-primary)' }}></span>
-                </span>
-              )}
+              {/* Active dot with smooth opacity & scale transition */}
+              <span 
+                className="absolute bottom-0 flex h-1 w-1 items-center justify-center transition-all duration-300 ease-out"
+                style={{
+                  opacity: isActive ? 1 : 0,
+                  transform: isActive ? 'scale(1)' : 'scale(0)'
+                }}
+              >
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: 'var(--color-primary)' }}></span>
+                <span className="relative inline-flex rounded-full h-1 w-1" style={{ background: 'var(--color-primary)' }}></span>
+              </span>
             </button>
           );
         })}
