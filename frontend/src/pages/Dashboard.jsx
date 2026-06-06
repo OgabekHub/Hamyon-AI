@@ -157,14 +157,19 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
               <span className="text-sm font-bold text-blue-200 mb-0.5">UZS</span>
             </div>
           </div>
-          <button
-            onClick={handleOpenBudgetModal}
-            className="p-2 rounded-xl transition-all duration-200 active:scale-90"
-            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
-            title="Budjetni tahrirlash"
-          >
-            <Edit2 size={14} className="text-white" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl text-white/80" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }} title="Hamyon">
+              <Wallet2 size={14} className="text-white" />
+            </div>
+            <button
+              onClick={handleOpenBudgetModal}
+              className="p-2 rounded-xl transition-all duration-200 active:scale-90"
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
+              title="Budjetni tahrirlash"
+            >
+              <Edit2 size={14} className="text-white" />
+            </button>
+          </div>
         </div>
 
         {/* Progress / Budget */}
@@ -206,11 +211,6 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
             </button>
           </div>
         )}
-
-        {/* Small decorative wallet icon */}
-        <div className="absolute bottom-4 right-5 opacity-10 pointer-events-none">
-          <Wallet2 size={64} className="text-white" />
-        </div>
       </div>
 
       {/* ── Pie Chart ── */}
