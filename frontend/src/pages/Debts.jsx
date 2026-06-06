@@ -416,7 +416,7 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                   type === 'owed'
                     ? {
                         background: 'rgba(16,185,129,0.12)',
-                        border: '2px solid #10b981',
+                        border: '1px solid #10b981',
                         color: 'var(--color-text)',
                         boxShadow: '0 0 12px rgba(16,185,129,0.15)'
                       }
@@ -446,7 +446,7 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                   type === 'owing'
                     ? {
                         background: 'rgba(244,63,94,0.10)',
-                        border: '2px solid #f43f5e',
+                        border: '1px solid #f43f5e',
                         color: 'var(--color-text)',
                         boxShadow: '0 0 12px rgba(244,63,94,0.15)'
                       }

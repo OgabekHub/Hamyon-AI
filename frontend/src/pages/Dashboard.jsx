@@ -464,7 +464,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                       isSelected
                         ? {
                             background: `${catInfo.color}15`,
-                            border: `2px solid ${catInfo.color}`,
+                            border: `1px solid ${catInfo.color}`,
                             color: 'var(--color-text)',
                             boxShadow: `0 0 12px ${catInfo.color}15`
                           }
