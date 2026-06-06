@@ -140,10 +140,32 @@ export default function App() {
         <div className="relative mb-6">
           <img src={logoImg} alt="Hamyon AI Logo" className="h-16 w-auto object-contain animate-float" />
         </div>
-        <p className="text-sm font-bold tracking-widest uppercase"
-          style={{ color: '#3b9ef8' }}>
-          Hamyon AI
-        </p>
+        <div className="text-sm font-black tracking-widest uppercase flex items-center gap-0.5"
+          style={{ color: '#ffffff' }}>
+          H
+          <span style={{ color: '#3b9ef8' }}>Λ</span>
+          M
+          Y
+          <span className="relative inline-flex items-center justify-center">
+            O
+            <span className="absolute rounded-full" 
+              style={{ 
+                width: '3.5px', 
+                height: '3.5px', 
+                backgroundColor: '#3b9ef8', 
+                boxShadow: '0 0 4px #3b9ef8' 
+              }} 
+            />
+          </span>
+          N
+          <span className="ml-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-md text-white" 
+            style={{ 
+              background: 'linear-gradient(135deg, #1e63f5, #3b9ef8)',
+              letterSpacing: '0.5px'
+            }}>
+            AI
+          </span>
+        </div>
         <p className="text-xs mt-1" style={{ color: '#7fa8d4' }}>yuklanmoqda...</p>
       </div>
     );
@@ -224,9 +246,32 @@ export default function App() {
         }}>
         <div className="flex items-center gap-2">
           <img src={logoImg} alt="Hamyon AI Logo" className="h-7 w-auto object-contain" style={{ position: 'relative', top: '-1.5px' }} />
-          <span className="text-sm font-black tracking-widest uppercase"
-            style={{ color: 'var(--color-primary)' }}>
-            Hamyon AI
+          <span className="text-sm font-black tracking-widest uppercase flex items-center gap-0.5"
+            style={{ color: 'var(--color-text)' }}>
+            H
+            <span style={{ color: 'var(--color-primary)' }}>Λ</span>
+            M
+            Y
+            <span className="relative inline-flex items-center justify-center">
+              O
+              <span className="absolute rounded-full" 
+                style={{ 
+                  width: '3.5px', 
+                  height: '3.5px', 
+                  backgroundColor: 'var(--color-primary)', 
+                  boxShadow: '0 0 4px var(--color-primary)' 
+                }} 
+              />
+            </span>
+            N
+            <span className="ml-1 text-xs font-semibold px-1.5 py-0.5 rounded-md text-white" 
+              style={{ 
+                background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-alt))',
+                fontSize: '9px',
+                letterSpacing: '0.5px'
+              }}>
+              AI
+            </span>
           </span>
         </div>
 
