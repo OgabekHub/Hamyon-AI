@@ -18,23 +18,18 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   const content = (
-    <div className="fixed inset-0 z-50 flex items-end justify-center pointer-events-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto animate-fade-in"
         onClick={onClose}
       />
       
-      {/* Sheet Container */}
+      {/* Centered Modal Container */}
       <div 
-        className="relative w-full max-w-md glass rounded-t-[28px] px-5 pb-8 pt-3 border-t border-[rgba(59,158,248,0.20)] shadow-[0_-8px_32px_rgba(13,27,75,0.40)] pointer-events-auto animate-slide-up z-50"
-        style={{ background: 'var(--color-bg)', maxHeight: '90vh', overflowY: 'auto' }}
+        className="relative w-full max-w-sm glass rounded-[32px] px-5 pb-6 pt-5 border border-[rgba(59,158,248,0.22)] shadow-[0_12px_40px_rgba(13,27,75,0.50)] pointer-events-auto animate-scale-in z-50"
+        style={{ background: 'var(--color-bg)', maxHeight: '85vh', overflowY: 'auto' }}
       >
-        {/* Drag Handle indicator */}
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-1.5 rounded-full bg-gray-500/20" />
-        </div>
-
         {/* Header */}
         <div className="flex justify-between items-center mb-5">
           <h3 className="text-base font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>

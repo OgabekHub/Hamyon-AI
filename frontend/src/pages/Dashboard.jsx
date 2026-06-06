@@ -41,6 +41,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
   const [merchant,  setMerchant]  = useState('');
   const [category,  setCategory]  = useState(CATEGORIES[0].name);
   const [newBudget, setNewBudget] = useState('');
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
 
   const handleOpenBudgetModal = () => {
     setNewBudget(userData?.monthly_budget || '');
@@ -424,7 +425,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
       {/* ── BOTTOM SHEET: Add Transaction ── */}
       <BottomSheet 
         isOpen={showAddModal} 
-        onClose={() => setShowAddModal(false)} 
+        onClose={() => { setShowAddModal(false); setCatDropdownOpen(false); }} 
         title="Yangi Xarajat"
       >
         <form onSubmit={handleAddTransaction} className="flex flex-col gap-3.5">
@@ -448,19 +449,69 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
               style={{ color: 'var(--color-text)' }}
             />
           </div>
-          <div>
+          <div className="relative">
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
               style={{ color: 'var(--color-muted)' }}>Toifa</label>
-            <select
-              value={category} onChange={e => setCategory(e.target.value)}
-              className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
+            <button
+              type="button"
+              onClick={() => { setCatDropdownOpen(!catDropdownOpen); triggerHaptic?.('selection'); }}
+              className="w-full glass-input px-4 py-3 text-sm flex justify-between items-center text-left"
               style={{ color: 'var(--color-text)' }}
             >
-              {CATEGORIES.map(c => (
-                <option key={c.name} value={c.name}
-                  style={{ background: 'var(--color-bg)' }}>{c.name}</option>
-              ))}
-            </select>
+              {(() => {
+                const catInfo = CATEGORY_MAP[category] || { displayName: category, color: '#64748b', Icon: HelpCircle };
+                const IconComponent = catInfo.Icon;
+                return (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ 
+                        background: `${catInfo.color}15`, 
+                        border: `1px solid ${catInfo.color}30`, 
+                        color: catInfo.color 
+                      }}>
+                      <IconComponent size={12} />
+                    </div>
+                    <span className="font-semibold">{catInfo.displayName}</span>
+                  </div>
+                );
+              })()}
+              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{catDropdownOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {catDropdownOpen && (
+              <div 
+                className="absolute left-0 right-0 mt-1.5 glass rounded-2xl p-1.5 z-[60] flex flex-col gap-1 shadow-2xl max-h-48 overflow-y-auto animate-scale-in"
+                style={{ background: 'var(--color-bg)', borderColor: 'rgba(59,158,248,0.20)' }}
+              >
+                {CATEGORIES.map(c => {
+                  const catInfo = CATEGORY_MAP[c.name] || { displayName: c.name, color: '#64748b', Icon: HelpCircle };
+                  const IconComponent = catInfo.Icon;
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => { 
+                        setCategory(c.name); 
+                        setCatDropdownOpen(false); 
+                        triggerHaptic?.('selection'); 
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl text-xs flex items-center gap-2.5 text-left hover:bg-gray-500/10 transition-colors"
+                      style={{ color: 'var(--color-text)' }}
+                    >
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ 
+                          background: `${catInfo.color}15`, 
+                          border: `1px solid ${catInfo.color}30`, 
+                          color: catInfo.color 
+                        }}>
+                        <IconComponent size={12} />
+                      </div>
+                      <span className="font-bold">{catInfo.displayName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <div className="flex gap-3 mt-4">
             <button type="button" onClick={() => setShowAddModal(false)}

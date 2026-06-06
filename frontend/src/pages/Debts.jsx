@@ -61,6 +61,7 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
   const [amount, setAmount]         = useState('');
   const [type, setType]             = useState('owed');
   const [dueDate, setDueDate]       = useState('');
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
 
   const handleAddDebt = async (e) => {
     e.preventDefault();
@@ -388,7 +389,7 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
       {/* BOTTOM SHEET: Add Debt */}
       <BottomSheet
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => { setShowAddModal(false); setTypeDropdownOpen(false); }}
         title="Yangi Qarz"
       >
         <form onSubmit={handleAddDebt} className="flex flex-col gap-3.5">
@@ -405,15 +406,74 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                 style={{ color: 'var(--color-text)' }} />
             </div>
           ))}
-          <div>
+          <div className="relative">
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
               style={{ color: 'var(--color-muted)' }}>Qarz turi</label>
-            <select value={type} onChange={e => setType(e.target.value)}
-              className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
-              style={{ color: 'var(--color-text)' }}>
-              <option value="owed"  style={{ background: 'var(--color-bg)' }}>Menga qarz (Owed)</option>
-              <option value="owing" style={{ background: 'var(--color-bg)' }}>Men qarzman (Owing)</option>
-            </select>
+            <button
+              type="button"
+              onClick={() => { setTypeDropdownOpen(!typeDropdownOpen); triggerHaptic?.('selection'); }}
+              className="w-full glass-input px-4 py-3 text-sm flex justify-between items-center text-left"
+              style={{ color: 'var(--color-text)' }}
+            >
+              {type === 'owed' ? (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.20)', color: '#10b981' }}>
+                    <ArrowDownLeft size={12} />
+                  </div>
+                  <span className="font-semibold">Menga qarz (Owed)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.20)', color: '#f43f5e' }}>
+                    <ArrowUpRight size={12} />
+                  </div>
+                  <span className="font-semibold">Men qarzman (Owing)</span>
+                </div>
+              )}
+              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{typeDropdownOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {typeDropdownOpen && (
+              <div 
+                className="absolute left-0 right-0 mt-1.5 glass rounded-2xl p-1.5 z-[60] flex flex-col gap-1 shadow-2xl animate-scale-in"
+                style={{ background: 'var(--color-bg)', borderColor: 'rgba(59,158,248,0.20)' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { 
+                    setType('owed'); 
+                    setTypeDropdownOpen(false); 
+                    triggerHaptic?.('selection'); 
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs flex items-center gap-2.5 text-left hover:bg-gray-500/10 transition-colors"
+                  style={{ color: 'var(--color-text)' }}
+                >
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.20)', color: '#10b981' }}>
+                    <ArrowDownLeft size={12} />
+                  </div>
+                  <span className="font-bold">Menga qarz (Owed)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { 
+                    setType('owing'); 
+                    setTypeDropdownOpen(false); 
+                    triggerHaptic?.('selection'); 
+                  }}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs flex items-center gap-2.5 text-left hover:bg-gray-500/10 transition-colors"
+                  style={{ color: 'var(--color-text)' }}
+                >
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.20)', color: '#f43f5e' }}>
+                    <ArrowUpRight size={12} />
+                  </div>
+                  <span className="font-bold">Men qarzman (Owing)</span>
+                </button>
+              </div>
+            )}
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
