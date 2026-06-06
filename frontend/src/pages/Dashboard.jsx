@@ -237,19 +237,33 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
             </div>
 
             {/* Legend */}
-            <div className="flex-1 flex flex-col gap-1.5 max-h-[130px] overflow-y-auto pr-1 scrollbar-none">
-              {chartData.map((d, i) => (
-                <div key={i} className="flex justify-between items-center text-[11px]">
-                  <div className="flex items-center gap-2" style={{ color: 'var(--color-muted)' }}>
-                    <span className="w-2 h-2 rounded-full shrink-0 shadow-md"
-                      style={{ background: d.color, boxShadow: `0 0 6px ${d.color}` }} />
-                    <span className="truncate max-w-[90px]">{d.name}</span>
+            <div className="flex-1 flex flex-col gap-2 max-h-[130px] overflow-y-auto pr-1 scrollbar-none">
+              {chartData.map((d, i) => {
+                const catInfo = CATEGORY_MAP[d.name] || { displayName: d.name, color: d.color || '#64748b', Icon: HelpCircle };
+                const IconComponent = catInfo.Icon;
+                const catColor = catInfo.color;
+                return (
+                  <div key={i} className="flex justify-between items-center text-[11px]">
+                    <div className="flex items-center gap-2 min-w-0" style={{ color: 'var(--color-muted)' }}>
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ 
+                          background: `${catColor}15`, 
+                          border: `1px solid ${catColor}30`,
+                          color: catColor,
+                          boxShadow: `0 0 6px ${catColor}05`
+                        }}>
+                        <IconComponent size={12} />
+                      </div>
+                      <span className="truncate text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+                        {catInfo.displayName}
+                      </span>
+                    </div>
+                    <span className="font-extrabold text-xs ml-2" style={{ color: 'var(--color-text)' }}>
+                      {((d.value / totalSpent) * 100).toFixed(0)}%
+                    </span>
                   </div>
-                  <span className="font-bold" style={{ color: 'var(--color-text)' }}>
-                    {((d.value / totalSpent) * 100).toFixed(0)}%
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
