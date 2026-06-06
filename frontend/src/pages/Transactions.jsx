@@ -187,10 +187,14 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
             const transitionStyle = isDragged ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
 
             return (
-              <div key={t.id} className="relative select-none touch-pan-y">
+              <div key={t.id} className="relative select-none touch-pan-y overflow-hidden rounded-2xl">
                 {/* Underlay delete button */}
                 <div 
                   className="absolute right-0 top-0 bottom-0 w-[72px] bg-gradient-to-l from-red-600 to-red-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                  style={{
+                    transform: `translateX(${72 + translateX}px)`,
+                    transition: transitionStyle,
+                  }}
                   onClick={() => handleDelete(t.id)}
                 >
                   <Trash2 size={16} />

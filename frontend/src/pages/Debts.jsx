@@ -211,10 +211,14 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                 const transitionStyle = isDragged ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
 
                 return (
-                  <div key={d.id} className="relative select-none touch-pan-y">
+                  <div key={d.id} className="relative select-none touch-pan-y overflow-hidden rounded-2xl">
                     {/* Left underlay (Complete) */}
                     <div 
                       className="absolute left-0 top-0 bottom-0 w-[72px] bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                      style={{
+                        transform: `translateX(${-72 + Math.max(0, translateX)}px)`,
+                        transition: transitionStyle,
+                      }}
                       onClick={() => {
                         handleTogglePaid(d.id, d.is_paid);
                         setSwipedRowId(null);
@@ -227,6 +231,10 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                     {/* Right underlay (Delete) */}
                     <div 
                       className="absolute right-0 top-0 bottom-0 w-[72px] bg-gradient-to-l from-red-600 to-red-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                      style={{
+                        transform: `translateX(${72 + Math.min(0, translateX)}px)`,
+                        transition: transitionStyle,
+                      }}
                       onClick={() => {
                         handleDeleteDebt(d.id);
                         setSwipedRowId(null);
@@ -298,10 +306,14 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                 const transitionStyle = isDragged ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
 
                 return (
-                  <div key={d.id} className="relative select-none touch-pan-y">
+                  <div key={d.id} className="relative select-none touch-pan-y overflow-hidden rounded-2xl">
                     {/* Left underlay (Undo) */}
                     <div 
                       className="absolute left-0 top-0 bottom-0 w-[72px] bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                      style={{
+                        transform: `translateX(${-72 + Math.max(0, translateX)}px)`,
+                        transition: transitionStyle,
+                      }}
                       onClick={() => {
                         handleTogglePaid(d.id, d.is_paid);
                         setSwipedRowId(null);
@@ -314,6 +326,10 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                     {/* Right underlay (Delete) */}
                     <div 
                       className="absolute right-0 top-0 bottom-0 w-[72px] bg-gradient-to-l from-red-600 to-red-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                      style={{
+                        transform: `translateX(${72 + Math.min(0, translateX)}px)`,
+                        transition: transitionStyle,
+                      }}
                       onClick={() => {
                         handleDeleteDebt(d.id);
                         setSwipedRowId(null);
