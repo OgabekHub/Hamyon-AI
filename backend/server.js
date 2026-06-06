@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { supabase } from './db.js';
 import { startBot } from './bot.js';
 import { authMiddleware } from './middleware/auth.js';
-import { generateAIInsights } from './ai.js';
+import { generateAIInsights, askAIChat } from './ai.js';
 
 dotenv.config();
 
@@ -304,6 +304,34 @@ app.post('/api/insights/generate', authMiddleware, dbUserMiddleware, async (req,
     res.json(newInsight);
   } catch (error) {
     console.error('Generate Insights API error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/insights/chat', authMiddleware, dbUserMiddleware, async (req, res) => {
+  const { message } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'Xabar matni yuborilmadi (message is required)' });
+  }
+
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [txRes, budgetRes, debtRes] = await Promise.all([
+      supabase.from('transactions').select('*').eq('user_id', req.dbUser.id).gte('date', thirtyDaysAgo.toISOString()),
+      supabase.from('budgets').select('*').eq('user_id', req.dbUser.id),
+      supabase.from('debts').select('*').eq('user_id', req.dbUser.id).eq('is_paid', false)
+    ]);
+
+    if (txRes.error) throw txRes.error;
+    if (budgetRes.error) throw budgetRes.error;
+    if (debtRes.error) throw debtRes.error;
+
+    const responseText = await askAIChat(req.dbUser.name, message, txRes.data, budgetRes.data, debtRes.data);
+    res.json({ response: responseText });
+  } catch (error) {
+    console.error('Chat Insights API error:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -3,6 +3,7 @@ import {
   Edit2, Check, AlertCircle, Target, 
   ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
 } from 'lucide-react';
+import BottomSheet from '../components/BottomSheet';
 
 const CATEGORIES = [
   { name: '🛒 Oziq-ovqat', color: '#10b981' },
@@ -24,13 +25,16 @@ const CATEGORY_MAP = {
   '🎯 Boshqa':     { displayName: 'Boshqa',     Icon: HelpCircle },
 };
 
-export default function Budget({ fetchWithAuth, budgets, transactions, refreshBudgets }) {
+export default function Budget({ fetchWithAuth, budgets, transactions, refreshBudgets, triggerHaptic }) {
   const [editingCategory, setEditingCategory] = useState(null);
   const [limitInput, setLimitInput]     = useState('');
 
   const handleSaveLimit = async (categoryName) => {
     const limitAmount = parseFloat(limitInput);
-    if (isNaN(limitAmount) || limitAmount < 0) return;
+    if (isNaN(limitAmount) || limitAmount < 0) {
+      triggerHaptic?.('notification', 'error');
+      return;
+    }
     try {
       await fetchWithAuth('/api/budgets', {
         method: 'POST',
@@ -39,7 +43,11 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
       setEditingCategory(null);
       setLimitInput('');
       refreshBudgets();
-    } catch (err) { console.error(err); }
+      triggerHaptic?.('notification', 'success');
+    } catch (err) { 
+      triggerHaptic?.('notification', 'error');
+      console.error(err); 
+    }
   };
 
   const txs             = Array.isArray(transactions) ? transactions : [];
@@ -75,7 +83,6 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
             const budgetObj = safeBudgets.find(b => b.category === cat);
             const limit     = budgetObj ? Number(budgetObj.limit_amount) : 0;
             const percent   = limit > 0 ? (spent / limit) * 100 : 0;
-            const isEditing = editingCategory === cat;
 
             // Progress color
             const barColor  = percent > 100 ? '#f43f5e' : percent > 85 ? '#f59e0b' : color;
@@ -84,7 +91,7 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
               <div
                 key={cat}
                 className="glass rounded-3xl p-5 flex flex-col gap-3 transition-all duration-300"
-                style={{ borderColor: isEditing ? 'rgba(30,99,245,0.30)' : 'rgba(59,158,248,0.10)' }}
+                style={{ borderColor: 'rgba(59,158,248,0.10)' }}
               >
                 {/* Row: name + edit/save button */}
                 <div className="flex justify-between items-center">
@@ -111,114 +118,118 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
                     );
                   })()}
 
-                  {!isEditing ? (
-                    <button
-                      onClick={() => { setEditingCategory(cat); setLimitInput(limit || ''); }}
-                      className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
-                      style={{
-                        color: 'var(--color-primary)',
-                        background: 'rgba(30,99,245,0.08)',
-                        border: '1px solid rgba(59,158,248,0.20)',
-                      }}
-                    >
-                      <Edit2 size={11} /> Tahrirlash
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleSaveLimit(cat)}
-                      className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
-                      style={{
-                        color: '#10b981',
-                        background: 'rgba(16,185,129,0.08)',
-                        border: '1px solid rgba(16,185,129,0.20)',
-                      }}
-                    >
-                      <Check size={12} /> Saqlash
-                    </button>
-                  )}
+                  <button
+                    onClick={() => { setEditingCategory(cat); setLimitInput(limit || ''); }}
+                    className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-all"
+                    style={{
+                      color: 'var(--color-primary)',
+                      background: 'rgba(30,99,245,0.08)',
+                      border: '1px solid rgba(59,158,248,0.20)',
+                    }}
+                  >
+                    <Edit2 size={11} /> Tahrirlash
+                  </button>
                 </div>
 
-                {/* Editing input */}
-                {isEditing && (
-                  <div className="flex gap-2 animate-fade-in">
-                    <input
-                      type="number"
-                      placeholder="Limit miqdori (UZS)"
-                      value={limitInput}
-                      onChange={e => setLimitInput(e.target.value)}
-                      className="flex-1 glass-input px-3 py-2.5 text-xs"
-                      style={{ color: 'var(--color-text)' }}
-                    />
-                    <button
-                      onClick={() => handleSaveLimit(cat)}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-white btn-primary"
-                    >
-                      Tayyor
-                    </button>
-                  </div>
-                )}
-
                 {/* Stats & Progress */}
-                {!isEditing && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between text-[11px] font-medium"
-                      style={{ color: 'var(--color-muted)' }}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between text-[11px] font-medium"
+                    style={{ color: 'var(--color-muted)' }}>
+                    <span>
+                      Sarflangan: <strong style={{ color: 'var(--color-text)' }}>
+                        {spent.toLocaleString('uz-UZ')} UZS
+                      </strong>
+                    </span>
+                    {limit > 0 ? (
                       <span>
-                        Sarflangan: <strong style={{ color: 'var(--color-text)' }}>
-                          {spent.toLocaleString('uz-UZ')} UZS
+                        Limit: <strong style={{ color: 'var(--color-text)' }}>
+                          {limit.toLocaleString('uz-UZ')} UZS
                         </strong>
                       </span>
-                      {limit > 0 ? (
-                        <span>
-                          Limit: <strong style={{ color: 'var(--color-text)' }}>
-                            {limit.toLocaleString('uz-UZ')} UZS
-                          </strong>
-                        </span>
-                      ) : (
-                        <span className="italic text-[10px]">Limit yo'q</span>
-                      )}
-                    </div>
-
-                    {limit > 0 && (
-                      <>
-                        {/* Progress bar */}
-                        <div className="h-2 rounded-full overflow-hidden"
-                          style={{ background: 'rgba(59,158,248,0.08)', border: '1px solid rgba(59,158,248,0.10)' }}>
-                          <div
-                            className="h-full rounded-full relative overflow-hidden transition-all duration-700 ease-out"
-                            style={{
-                              width: `${Math.min(100, percent)}%`,
-                              background: barColor,
-                              animation: percent > 100 ? 'glowPulse 1.5s ease-in-out infinite' : 'none',
-                            }}
-                          >
-                            <div className="absolute inset-0 progress-shimmer" />
-                          </div>
-                        </div>
-
-                        {/* Percent info */}
-                        <div className="flex justify-between text-[10px]" style={{ color: 'var(--color-muted)' }}>
-                          <span>{percent.toFixed(0)}% ishlatildi</span>
-                          {percent > 100 ? (
-                            <span className="font-extrabold flex items-center gap-0.5 animate-pulse"
-                              style={{ color: 'var(--color-danger)' }}>
-                              <AlertCircle size={10} />
-                              Limit buzildi! (-{(spent - limit).toLocaleString('uz-UZ')} UZS)
-                            </span>
-                          ) : (
-                            <span className="font-semibold" style={{ color: barColor }}>
-                              Qoldiq: {(limit - spent).toLocaleString('uz-UZ')} UZS
-                            </span>
-                          )}
-                        </div>
-                      </>
+                    ) : (
+                      <span className="italic text-[10px]">Limit yo'q</span>
                     )}
                   </div>
-                )}
+
+                  {limit > 0 && (
+                    <>
+                      {/* Progress bar */}
+                      <div className="h-2 rounded-full overflow-hidden"
+                        style={{ background: 'rgba(59,158,248,0.08)', border: '1px solid rgba(59,158,248,0.10)' }}>
+                        <div
+                          className="h-full rounded-full relative overflow-hidden transition-all duration-700 ease-out"
+                          style={{
+                            width: `${Math.min(100, percent)}%`,
+                            background: barColor,
+                            animation: percent > 100 ? 'glowPulse 1.5s ease-in-out infinite' : 'none',
+                          }}
+                        >
+                          <div className="absolute inset-0 progress-shimmer" />
+                        </div>
+                      </div>
+
+                      {/* Percent info */}
+                      <div className="flex justify-between text-[10px]" style={{ color: 'var(--color-muted)' }}>
+                        <span>{percent.toFixed(0)}% ishlatildi</span>
+                        {percent > 100 ? (
+                          <span className="font-extrabold flex items-center gap-0.5 animate-pulse"
+                            style={{ color: 'var(--color-danger)' }}>
+                            <AlertCircle size={10} />
+                            Limit buzildi! (-{(spent - limit).toLocaleString('uz-UZ')} UZS)
+                          </span>
+                        ) : (
+                          <span className="font-semibold" style={{ color: barColor }}>
+                            Qoldiq: {(limit - spent).toLocaleString('uz-UZ')} UZS
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
+
+        {/* BOTTOM SHEET: Set Category Limit */}
+        <BottomSheet
+          isOpen={editingCategory !== null}
+          onClose={() => setEditingCategory(null)}
+          title="Limit o'rnatish"
+        >
+          <form onSubmit={(e) => { e.preventDefault(); handleSaveLimit(editingCategory); }} className="flex flex-col gap-3.5">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+                style={{ color: 'var(--color-muted)' }}>
+                {editingCategory && (CATEGORY_MAP[editingCategory]?.displayName || editingCategory)} toifasi uchun limit (UZS)
+              </label>
+              <input
+                type="number"
+                required
+                placeholder="Masalan: 1000000"
+                value={limitInput}
+                onChange={e => setLimitInput(e.target.value)}
+                className="w-full glass-input px-4 py-3.5 text-sm"
+                style={{ color: 'var(--color-text)' }}
+              />
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button type="button" onClick={() => setEditingCategory(null)}
+                className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
+                style={{
+                  background: 'rgba(59,158,248,0.06)',
+                  border: '1px solid rgba(59,158,248,0.16)',
+                  color: 'var(--color-muted)',
+                }}>
+                Bekor
+              </button>
+              <button type="submit"
+                className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
+                Saqlash
+              </button>
+            </div>
+          </form>
+        </BottomSheet>
     </div>
   );
 }

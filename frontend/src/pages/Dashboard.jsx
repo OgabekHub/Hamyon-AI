@@ -4,6 +4,7 @@ import {
   Plus, Edit2, Trash2, ArrowRight, X, TrendingDown, Wallet2,
   ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
 } from 'lucide-react';
+import BottomSheet from '../components/BottomSheet';
 
 const CATEGORIES = [
   { name: '🛒 Oziq-ovqat', color: '#10b981' },
@@ -31,9 +32,10 @@ function fmt(n) {
   return String(n);
 }
 
-export default function Dashboard({ fetchWithAuth, user, setActiveTab, transactions, userData, refreshTransactions, refreshProfile }) {
+export default function Dashboard({ fetchWithAuth, user, setActiveTab, transactions, userData, refreshTransactions, refreshProfile, triggerHaptic }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [selectedChartCategory, setSelectedChartCategory] = useState(null);
 
   const [amount,    setAmount]    = useState('');
   const [merchant,  setMerchant]  = useState('');
@@ -47,7 +49,10 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
 
   const handleAddTransaction = async (e) => {
     e.preventDefault();
-    if (!amount || Number(amount) <= 0) return;
+    if (!amount || Number(amount) <= 0) {
+      triggerHaptic?.('notification', 'error');
+      return;
+    }
     try {
       await fetchWithAuth('/api/transactions', {
         method: 'POST',
@@ -56,7 +61,11 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
       setShowAddModal(false);
       setAmount(''); setMerchant(''); setCategory(CATEGORIES[0].name);
       refreshTransactions();
-    } catch { alert("Qo'shib bo'lmadi"); }
+      triggerHaptic?.('notification', 'success');
+    } catch { 
+      triggerHaptic?.('notification', 'error');
+      alert("Qo'shib bo'lmadi"); 
+    }
   };
 
   const handleUpdateBudget = async (e) => {
@@ -68,7 +77,11 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
       });
       setShowBudgetModal(false);
       refreshProfile();
-    } catch (err) { console.error(err); }
+      triggerHaptic?.('notification', 'success');
+    } catch (err) { 
+      triggerHaptic?.('notification', 'error');
+      console.error(err); 
+    }
   };
 
   const handleDeleteTransaction = async (id) => {
@@ -76,11 +89,18 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
     try {
       await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
       refreshTransactions();
-    } catch (err) { console.error(err); }
+      triggerHaptic?.('impact', 'medium');
+    } catch (err) { 
+      triggerHaptic?.('notification', 'error');
+      console.error(err); 
+    }
   };
 
   // Calculations
   const txs             = Array.isArray(transactions) ? transactions : [];
+  const displayedTxs    = selectedChartCategory
+    ? txs.filter(t => t.category === selectedChartCategory)
+    : txs;
   const currentMonthStr = new Date().toISOString().substring(0, 7);
   const monthlyTxs      = txs.filter(t => t.date.substring(0, 7) === currentMonthStr);
   const totalSpent      = monthlyTxs.reduce((s, t) => s + Number(t.amount), 0);
@@ -195,10 +215,10 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
 
       {/* ── Pie Chart ── */}
       {chartData.length > 0 && (
-        <div className="glass rounded-3xl p-5 mb-5">
+        <div className="glass rounded-3xl p-5 mb-5 animate-scale-in">
           <h3 className="text-[10px] font-bold uppercase tracking-widest mb-4"
             style={{ color: 'var(--color-muted)' }}>
-            Toifalar bo'yicha tahlil
+            Toifalar bo'yicha tahlil {selectedChartCategory && '· Saralangan'}
           </h3>
           <div className="flex items-center gap-4">
             {/* Donut chart */}
@@ -213,9 +233,25 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                     dataKey="value"
                     strokeWidth={0}
                   >
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
+                    {chartData.map((entry, i) => {
+                      const isSelected = selectedChartCategory === entry.name;
+                      const hasSelection = selectedChartCategory !== null;
+                      return (
+                        <Cell 
+                          key={i} 
+                          fill={isSelected || !hasSelection ? entry.color : `${entry.color}33`} 
+                          style={{
+                            cursor: 'pointer',
+                            outline: 'none',
+                            transition: 'all 0.25s ease',
+                          }}
+                          onClick={() => {
+                            setSelectedChartCategory(prev => prev === entry.name ? null : entry.name);
+                            triggerHaptic?.('selection');
+                          }}
+                        />
+                      );
+                    })}
                   </Pie>
                   <Tooltip
                     formatter={v => [`${v.toLocaleString('uz-UZ')} UZS`]}
@@ -230,9 +266,25 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                 </PieChart>
               </ResponsiveContainer>
               {/* Center label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>Jami</span>
-                <span className="text-xs font-black" style={{ color: 'var(--color-text)' }}>{fmt(totalSpent)}</span>
+              <div 
+                className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 active:scale-95"
+                style={{ 
+                  pointerEvents: selectedChartCategory ? 'auto' : 'none',
+                  background: selectedChartCategory ? 'rgba(59,158,248,0.06)' : 'transparent',
+                  borderRadius: '99px',
+                  margin: '38px',
+                }}
+                onClick={() => {
+                  setSelectedChartCategory(null);
+                  triggerHaptic?.('impact', 'light');
+                }}
+              >
+                <span className="text-[9px] uppercase tracking-wider text-center block" style={{ color: selectedChartCategory ? 'var(--color-primary)' : 'var(--color-muted)' }}>
+                  {selectedChartCategory ? 'Tozalash' : 'Jami'}
+                </span>
+                <span className="text-xs font-black block" style={{ color: 'var(--color-text)' }}>
+                  {selectedChartCategory ? fmt(categoryTotals[selectedChartCategory] || 0) : fmt(totalSpent)}
+                </span>
               </div>
             </div>
 
@@ -242,8 +294,22 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                 const catInfo = CATEGORY_MAP[d.name] || { displayName: d.name, color: d.color || '#64748b', Icon: HelpCircle };
                 const IconComponent = catInfo.Icon;
                 const catColor = catInfo.color;
+                const isSelected = selectedChartCategory === d.name;
+                const hasSelection = selectedChartCategory !== null;
+
                 return (
-                  <div key={i} className="flex justify-between items-center text-[11px]">
+                  <div 
+                    key={i} 
+                    className="flex justify-between items-center text-[11px] cursor-pointer transition-all duration-200 active:scale-98"
+                    style={{
+                      opacity: isSelected || !hasSelection ? 1 : 0.35,
+                      transform: isSelected ? 'translateX(2px)' : 'translateX(0)',
+                    }}
+                    onClick={() => {
+                      setSelectedChartCategory(prev => prev === d.name ? null : d.name);
+                      triggerHaptic?.('selection');
+                    }}
+                  >
                     <div className="flex items-center gap-2 min-w-0" style={{ color: 'var(--color-muted)' }}>
                       <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
                         style={{ 
@@ -254,11 +320,11 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                         }}>
                         <IconComponent size={12} />
                       </div>
-                      <span className="truncate text-xs font-semibold" style={{ color: 'var(--color-text)' }}>
+                      <span className="truncate text-xs font-semibold" style={{ color: isSelected ? 'var(--color-primary)' : 'var(--color-text)' }}>
                         {catInfo.displayName}
                       </span>
                     </div>
-                    <span className="font-extrabold text-xs ml-2" style={{ color: 'var(--color-text)' }}>
+                    <span className="font-extrabold text-xs ml-2" style={{ color: isSelected ? 'var(--color-primary)' : 'var(--color-text)' }}>
                       {((d.value / totalSpent) * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -273,7 +339,9 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
       <div>
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-muted)' }}>
-            So'nggi xarajatlar
+            {selectedChartCategory 
+              ? `${CATEGORY_MAP[selectedChartCategory]?.displayName || selectedChartCategory} bo'yicha` 
+              : "So'nggi xarajatlar"}
           </h3>
           <button
             onClick={() => setActiveTab('transactions')}
@@ -284,7 +352,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
           </button>
         </div>
 
-        {txs.length === 0 ? (
+        {displayedTxs.length === 0 ? (
           <div className="glass rounded-3xl p-10 text-center text-sm border-dashed"
             style={{
               color: 'var(--color-muted)',
@@ -296,7 +364,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {txs.slice(0, 5).map(t => (
+            {displayedTxs.slice(0, 5).map(t => (
               <div
                 key={t.id}
                 className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center transition-all duration-200 hover:-translate-y-0.5 active:scale-98"
@@ -353,131 +421,99 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
         )}
       </div>
 
-      {/* ── MODAL: Add Transaction ── */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-          style={{ background: 'rgba(4,8,16,0.85)', backdropFilter: 'blur(10px)' }}>
-          <div className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up"
-            style={{
-              background: 'var(--color-bg)',
-              border: '1px solid rgba(59,158,248,0.20)',
-              boxShadow: '0 -20px 60px rgba(13,27,75,0.40)',
-            }}>
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-base font-extrabold" style={{ color: 'var(--color-text)' }}>
-                Yangi Xarajat
-              </h3>
-              <button onClick={() => setShowAddModal(false)}
-                className="p-1.5 rounded-xl"
-                style={{ background: 'rgba(59,158,248,0.08)', color: 'var(--color-muted)' }}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleAddTransaction} className="flex flex-col gap-3.5">
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
-                  style={{ color: 'var(--color-muted)' }}>Mablag' (UZS)</label>
-                <input
-                  type="number" required placeholder="Masalan: 25000"
-                  value={amount} onChange={e => setAmount(e.target.value)}
-                  className="w-full glass-input px-4 py-3.5 text-sm"
-                  style={{ color: 'var(--color-text)' }}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
-                  style={{ color: 'var(--color-muted)' }}>Joy / Do'kon</label>
-                <input
-                  type="text" required placeholder="Masalan: Korzinka"
-                  value={merchant} onChange={e => setMerchant(e.target.value)}
-                  className="w-full glass-input px-4 py-3.5 text-sm"
-                  style={{ color: 'var(--color-text)' }}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
-                  style={{ color: 'var(--color-muted)' }}>Toifa</label>
-                <select
-                  value={category} onChange={e => setCategory(e.target.value)}
-                  className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
-                  style={{ color: 'var(--color-text)' }}
-                >
-                  {CATEGORIES.map(c => (
-                    <option key={c.name} value={c.name}
-                      style={{ background: 'var(--color-bg)' }}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-3 mt-2">
-                <button type="button" onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-colors"
-                  style={{
-                    background: 'rgba(59,158,248,0.06)',
-                    border: '1px solid rgba(59,158,248,0.16)',
-                    color: 'var(--color-muted)',
-                  }}>
-                  Bekor
-                </button>
-                <button type="submit"
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
-                  Saqlash
-                </button>
-              </div>
-            </form>
+      {/* ── BOTTOM SHEET: Add Transaction ── */}
+      <BottomSheet 
+        isOpen={showAddModal} 
+        onClose={() => setShowAddModal(false)} 
+        title="Yangi Xarajat"
+      >
+        <form onSubmit={handleAddTransaction} className="flex flex-col gap-3.5">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+              style={{ color: 'var(--color-muted)' }}>Mablag' (UZS)</label>
+            <input
+              type="number" required placeholder="Masalan: 25000"
+              value={amount} onChange={e => setAmount(e.target.value)}
+              className="w-full glass-input px-4 py-3.5 text-sm"
+              style={{ color: 'var(--color-text)' }}
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+              style={{ color: 'var(--color-muted)' }}>Joy / Do'kon</label>
+            <input
+              type="text" required placeholder="Masalan: Korzinka"
+              value={merchant} onChange={e => setMerchant(e.target.value)}
+              className="w-full glass-input px-4 py-3.5 text-sm"
+              style={{ color: 'var(--color-text)' }}
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+              style={{ color: 'var(--color-muted)' }}>Toifa</label>
+            <select
+              value={category} onChange={e => setCategory(e.target.value)}
+              className="w-full glass-input px-4 py-3.5 text-sm appearance-none"
+              style={{ color: 'var(--color-text)' }}
+            >
+              {CATEGORIES.map(c => (
+                <option key={c.name} value={c.name}
+                  style={{ background: 'var(--color-bg)' }}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button type="button" onClick={() => setShowAddModal(false)}
+              className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-colors"
+              style={{
+                background: 'rgba(59,158,248,0.06)',
+                border: '1px solid rgba(59,158,248,0.16)',
+                color: 'var(--color-muted)',
+              }}>
+              Bekor
+            </button>
+            <button type="submit"
+              className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
+              Saqlash
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
 
-      {/* ── MODAL: Budget ── */}
-      {showBudgetModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
-          style={{ background: 'rgba(4,8,16,0.85)', backdropFilter: 'blur(10px)' }}>
-          <div className="w-full max-w-sm rounded-t-3xl sm:rounded-3xl p-6 animate-slide-up"
-            style={{
-              background: 'var(--color-bg)',
-              border: '1px solid rgba(59,158,248,0.20)',
-              boxShadow: '0 -20px 60px rgba(13,27,75,0.40)',
-            }}>
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-base font-extrabold" style={{ color: 'var(--color-text)' }}>
-                Oylik Budjet Limiti
-              </h3>
-              <button onClick={() => setShowBudgetModal(false)}
-                className="p-1.5 rounded-xl"
-                style={{ background: 'rgba(59,158,248,0.08)', color: 'var(--color-muted)' }}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateBudget} className="flex flex-col gap-3.5">
-              <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
-                  style={{ color: 'var(--color-muted)' }}>Budjet (UZS)</label>
-                <input
-                  type="number" required placeholder="Masalan: 5000000"
-                  value={newBudget} onChange={e => setNewBudget(e.target.value)}
-                  className="w-full glass-input px-4 py-3.5 text-sm"
-                  style={{ color: 'var(--color-text)' }}
-                />
-              </div>
-              <div className="flex gap-3 mt-2">
-                <button type="button" onClick={() => setShowBudgetModal(false)}
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
-                  style={{
-                    background: 'rgba(59,158,248,0.06)',
-                    border: '1px solid rgba(59,158,248,0.16)',
-                    color: 'var(--color-muted)',
-                  }}>
-                  Bekor
-                </button>
-                <button type="submit"
-                  className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
-                  Yangilash
-                </button>
-              </div>
-            </form>
+      {/* ── BOTTOM SHEET: Budget ── */}
+      <BottomSheet
+        isOpen={showBudgetModal}
+        onClose={() => setShowBudgetModal(false)}
+        title="Oylik Budjet Limiti"
+      >
+        <form onSubmit={handleUpdateBudget} className="flex flex-col gap-3.5">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+              style={{ color: 'var(--color-muted)' }}>Budjet (UZS)</label>
+            <input
+              type="number" required placeholder="Masalan: 5000000"
+              value={newBudget} onChange={e => setNewBudget(e.target.value)}
+              className="w-full glass-input px-4 py-3.5 text-sm"
+              style={{ color: 'var(--color-text)' }}
+            />
           </div>
-        </div>
-      )}
+          <div className="flex gap-3 mt-4">
+            <button type="button" onClick={() => setShowBudgetModal(false)}
+              className="flex-1 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider"
+              style={{
+                background: 'rgba(59,158,248,0.06)',
+                border: '1px solid rgba(59,158,248,0.16)',
+                color: 'var(--color-muted)',
+              }}>
+              Bekor
+            </button>
+            <button type="submit"
+              className="flex-1 py-3.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white btn-primary">
+              Yangilash
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
     </div>
   );
 }

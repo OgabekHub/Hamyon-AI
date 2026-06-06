@@ -255,3 +255,86 @@ function getFallbackInsight(userName, totalSpent, categoryTotals, owedToMe, owin
   ];
   return tips.filter(t => t !== '').join('\n\n');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Interactive Chat logic
+// ─────────────────────────────────────────────────────────────────────────────
+export async function askAIChat(userName, userMessage, transactions, budgets, debts) {
+  const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const categoryTotals = {};
+  transactions.forEach(t => {
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Number(t.amount);
+  });
+
+  const categoryText = Object.entries(categoryTotals)
+    .map(([cat, val]) => `- ${cat}: ${val.toLocaleString('uz-UZ')} UZS`)
+    .join('\n');
+
+  const unpaidDebts    = debts.filter(d => !d.is_paid);
+  const owedToMe       = unpaidDebts.filter(d => d.type === 'owed').reduce((s, d) => s + Number(d.amount), 0);
+  const owingToOthers  = unpaidDebts.filter(d => d.type === 'owing').reduce((s, d) => s + Number(d.amount), 0);
+  const budgetLimits   = budgets.map(b => `- ${b.category}: ${Number(b.limit_amount).toLocaleString('uz-UZ')} UZS`).join('\n');
+
+  if (!GEMINI_API_KEY) {
+    return getFallbackChatResponse(userMessage);
+  }
+
+  try {
+    const prompt = `You are Hamyon AI — an Uzbek personal finance advisor.
+Answer the user's question directly in a helpful, friendly manner in Uzbek language (O'zbek tilida).
+Consider Uzbekistan context: local markets (Chorsu, Oloy bozor), Yandex/Bolt taxi, Click/Payme payments, seasonal events (Navruz, Ramazon, wedding seasons "to'ylar").
+
+Here is the user's financial status:
+User: ${userName || 'Foydalanuvchi'}
+This month total spending: ${totalSpent.toLocaleString('uz-UZ')} UZS
+Spending by category:
+${categoryText || "Hali xarajatlar yo'q."}
+
+Budget limits:
+${budgetLimits || 'Budjet belgilab olinmagan.'}
+
+Debts:
+- People owe me: ${owedToMe.toLocaleString('uz-UZ')} UZS
+- I owe others: ${owingToOthers.toLocaleString('uz-UZ')} UZS
+
+User's Question/Message: "${userMessage}"
+Write a concise, natural, and helpful response. Use emojis. Keep it under 150 words.`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 300, temperature: 0.7 },
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || getFallbackChatResponse(userMessage);
+  } catch (err) {
+    console.error('Gemini AI Chat error:', err.message);
+    return getFallbackChatResponse(userMessage);
+  }
+}
+
+function getFallbackChatResponse(message) {
+  const msg = message.toLowerCase();
+  if (msg.includes('salom') || msg.includes('assalomu')) {
+    return "Assalomu alaykum! Men Hamyon AI yordamchisiman. Sizga qanday yordam bera olaman? Masalan, xarajatlarni qisqartirish, tejash yoki qarzlarni boshqarish haqida so'rashingiz mumkin. 🧠💰";
+  }
+  if (msg.includes('tejash') || msg.includes('tejamkorlik') || msg.includes('pul tejash')) {
+    return "Pul tejash uchun ajoyib maslahat: Har oy daromad olganingizda, Click/Payme orqali xarajat qilishdan oldin kamida 10-15% qismini omonat yoki alohida kartaga o'tkazib qo'ying (50/30/20 qoidasi). Haftalik oziq-ovqat xaridlarini esa bozorlardan ulgurji narxda qiling! 🛒📉";
+  }
+  if (msg.includes('taksi') || msg.includes('transport') || msg.includes('yandex')) {
+    return "Taksi xizmatlari (Yandex/Bolt) oylik budjetingizni sezilarli darajada kamaytirishi mumkin. Yaqin masofalarga piyoda yurish, metro yoki avtobusdan foydalanish orqali oylik transport xarajatlarini 40% gacha qisqartirishingiz mumkin! 🚶‍♂️🚌";
+  }
+  if (msg.includes('qarz') || msg.includes('debt')) {
+    return "Qarzlarni boshqarishda 'Qor ko'chkisi' (avval eng yuqori foizli yoki eng og'ir qarzlarni to'lash) yoki 'Qor koptogi' (avval eng kichik qarzlarni yopib ruhlanish) usulidan foydalaning. Hamyondagi Qarz daftarini muntazam yangilab boring! 📓⚖️";
+  }
+  return "Tushundim. Bu borada maslahat berishim uchun xarajatlaringizni tahlil qilyapman. Click yoki Payme orqali to'lov SMS-larini botga yuborib tursangiz, aniqroq tavsiyalar bera olaman! 🤖📊";
+}

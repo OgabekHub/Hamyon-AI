@@ -17,7 +17,7 @@ const NAV_TABS = [
 ];
 
 export default function App() {
-  const { user, loading: tgLoading, fetchWithAuth } = useTelegram();
+  const { user, loading: tgLoading, fetchWithAuth, triggerHaptic } = useTelegram();
   const [activeTab, setActiveTab] = useState('home');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
@@ -184,6 +184,7 @@ export default function App() {
             userData={profile}
             refreshTransactions={refreshTransactions}
             refreshProfile={refreshProfile}
+            triggerHaptic={triggerHaptic}
           />
         );
       case 'transactions':
@@ -192,6 +193,7 @@ export default function App() {
             fetchWithAuth={fetchWithAuth}
             transactions={transactions}
             refreshTransactions={refreshTransactions}
+            triggerHaptic={triggerHaptic}
           />
         );
       case 'budget':
@@ -201,6 +203,7 @@ export default function App() {
             budgets={budgets}
             transactions={transactions}
             refreshBudgets={refreshBudgets}
+            triggerHaptic={triggerHaptic}
           />
         );
       case 'debts':
@@ -209,6 +212,7 @@ export default function App() {
             fetchWithAuth={fetchWithAuth}
             debts={debts}
             refreshDebts={refreshDebts}
+            triggerHaptic={triggerHaptic}
           />
         );
       case 'ai_report':
@@ -217,6 +221,7 @@ export default function App() {
             fetchWithAuth={fetchWithAuth}
             insight={insight}
             refreshInsight={refreshInsight}
+            triggerHaptic={triggerHaptic}
           />
         );
       default:
@@ -229,6 +234,7 @@ export default function App() {
             userData={profile}
             refreshTransactions={refreshTransactions}
             refreshProfile={refreshProfile}
+            triggerHaptic={triggerHaptic}
           />
         );
     }
@@ -318,7 +324,7 @@ export default function App() {
           return (
             <button
               key={key}
-              onClick={() => setActiveTab(key)}
+              onClick={() => { setActiveTab(key); triggerHaptic('selection'); }}
               className="relative flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-300 active:scale-95"
               style={{
                 color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',

@@ -26,16 +26,61 @@ const CATEGORY_MAP = {
   '🎯 Boshqa':     { displayName: 'Boshqa',     color: '#64748b', Icon: HelpCircle },
 };
 
-export default function Transactions({ fetchWithAuth, transactions, refreshTransactions }) {
+export default function Transactions({ fetchWithAuth, transactions, refreshTransactions, triggerHaptic }) {
   const [searchQuery, setSearchQuery]         = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Barchasi');
+
+  // Swipe-to-delete states
+  const [swipedRowId, setSwipedRowId] = useState(null);
+  const [draggedRowId, setDraggedRowId] = useState(null);
+  const [dragTranslation, setDragTranslation] = useState(0);
+  const [touchStartInfo, setTouchStartInfo] = useState({ x: 0, y: 0, startTrans: 0 });
+
+  const handleTouchStart = (e, id) => {
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const startTrans = swipedRowId === id ? -72 : 0;
+    setTouchStartInfo({ x, y, startTrans });
+    setDraggedRowId(id);
+    setDragTranslation(startTrans);
+  };
+
+  const handleTouchMove = (e, id) => {
+    if (draggedRowId !== id) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartInfo.x;
+    const diffY = currentY - touchStartInfo.y;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      if (e.cancelable) e.preventDefault();
+      let newTrans = touchStartInfo.startTrans + diffX;
+      newTrans = Math.max(-100, Math.min(0, newTrans));
+      setDragTranslation(newTrans);
+    }
+  };
+
+  const handleTouchEnd = (e, id) => {
+    if (draggedRowId !== id) return;
+    setDraggedRowId(null);
+    if (dragTranslation < -36) {
+      setSwipedRowId(id);
+      triggerHaptic?.('impact', 'light');
+    } else {
+      setSwipedRowId(null);
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!confirm("O'chirilsinmi?")) return;
     try {
       await fetchWithAuth(`/api/transactions/${id}`, { method: 'DELETE' });
       refreshTransactions();
-    } catch (err) { console.error(err); }
+      triggerHaptic?.('impact', 'medium');
+    } catch (err) { 
+      triggerHaptic?.('notification', 'error');
+      console.error(err); 
+    }
   };
 
   const txs = Array.isArray(transactions) ? transactions : [];
@@ -83,7 +128,7 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
           return (
             <button
               key={cat}
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => { setSelectedCategory(cat); triggerHaptic?.('selection'); }}
               className="px-3.5 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-200 active:scale-95 flex items-center gap-1.5"
               style={
                 isActive
@@ -130,71 +175,87 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
           Hech narsa topilmadi.
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2.5 overflow-hidden">
           {filtered.map(t => {
             const catInfo = CATEGORY_MAP[t.category] || { displayName: t.category, color: '#64748b', Icon: HelpCircle };
             const IconComponent = catInfo.Icon;
             const catColor = catInfo.color;
+
+            const isDragged = draggedRowId === t.id;
+            const isSwiped = swipedRowId === t.id;
+            const translateX = isDragged ? dragTranslation : (isSwiped ? -72 : 0);
+            const transitionStyle = isDragged ? 'none' : 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+
             return (
-              <div
-                key={t.id}
-                className="glass rounded-2xl px-4 py-3.5 flex justify-between items-start transition-all duration-200 hover:-translate-y-0.5"
-                style={{ borderColor: 'rgba(59,158,248,0.10)' }}
-              >
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  {/* Category icon badge */}
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ 
-                      background: `${catColor}15`, 
-                      border: `1px solid ${catColor}30`,
-                      color: catColor,
-                      boxShadow: `0 0 10px ${catColor}08`
-                    }}
-                  >
-                    <IconComponent size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
-                      {t.merchant}
-                    </h4>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                      {new Date(t.date).toLocaleDateString('uz-UZ')} · {catInfo.displayName}
-                    </p>
-                  {t.sms_raw && (
-                    <span
-                      className="text-[9px] mt-1.5 inline-block px-2.5 py-1 rounded-lg italic leading-relaxed max-w-[200px] break-words"
-                      style={{
-                        color: 'var(--color-primary)',
-                        background: 'rgba(30,99,245,0.08)',
-                        border: '1px solid rgba(59,158,248,0.15)',
+              <div key={t.id} className="relative select-none touch-pan-y">
+                {/* Underlay delete button */}
+                <div 
+                  className="absolute right-0 top-0 bottom-0 w-[72px] bg-gradient-to-l from-red-600 to-red-500 rounded-2xl flex items-center justify-center text-white cursor-pointer z-0 shadow-inner"
+                  onClick={() => handleDelete(t.id)}
+                >
+                  <Trash2 size={16} />
+                </div>
+
+                {/* Swipable content */}
+                <div
+                  className="glass rounded-2xl px-4 py-3.5 flex justify-between items-start relative z-10 transition-transform"
+                  style={{ 
+                    borderColor: 'rgba(59,158,248,0.10)',
+                    transform: `translateX(${translateX}px)`,
+                    transition: transitionStyle,
+                  }}
+                  onTouchStart={(e) => handleTouchStart(e, t.id)}
+                  onTouchMove={(e) => handleTouchMove(e, t.id)}
+                  onTouchEnd={(e) => handleTouchEnd(e, t.id)}
+                >
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                      style={{ 
+                        background: `${catColor}15`, 
+                        border: `1px solid ${catColor}30`,
+                        color: catColor,
+                        boxShadow: `0 0 10px ${catColor}08`
                       }}
-                      title={t.sms_raw}
                     >
-                      💬 {t.sms_raw.substring(0, 60)}{t.sms_raw.length > 60 ? '...' : ''}
+                      <IconComponent size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
+                        {t.merchant}
+                      </h4>
+                      <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                        {new Date(t.date).toLocaleDateString('uz-UZ')} · {catInfo.displayName}
+                      </p>
+                      {t.sms_raw && (
+                        <span
+                          className="text-[9px] mt-1.5 inline-block px-2.5 py-1 rounded-lg italic leading-relaxed max-w-[200px] break-words"
+                          style={{
+                            color: 'var(--color-primary)',
+                            background: 'rgba(30,99,245,0.08)',
+                            border: '1px solid rgba(59,158,248,0.15)',
+                          }}
+                          title={t.sms_raw}
+                        >
+                          💬 {t.sms_raw.substring(0, 60)}{t.sms_raw.length > 60 ? '...' : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
+                      -{Number(t.amount).toLocaleString('uz-UZ')}
                     </span>
-                  )}
+                    {!isSwiped && (
+                      <div className="w-1.5 h-6 rounded-full bg-gray-500/10 flex flex-col gap-0.5 items-center justify-center ml-1 shrink-0">
+                        <div className="w-0.5 h-0.5 rounded-full bg-gray-500/40" />
+                        <div className="w-0.5 h-0.5 rounded-full bg-gray-500/40" />
+                        <div className="w-0.5 h-0.5 rounded-full bg-gray-500/40" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0 ml-2">
-                <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
-                  -{Number(t.amount).toLocaleString('uz-UZ')}
-                </span>
-                <button
-                  onClick={() => handleDelete(t.id)}
-                  className="p-1.5 rounded-lg transition-all"
-                  style={{
-                    background: 'rgba(244,63,94,0.07)',
-                    border: '1px solid rgba(244,63,94,0.12)',
-                    color: 'var(--color-muted)',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'var(--color-muted)'}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            </div>
             );
           })}
         </div>

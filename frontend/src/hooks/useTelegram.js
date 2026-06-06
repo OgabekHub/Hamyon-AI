@@ -282,5 +282,21 @@ Assalomu alaykum! Xarajatlaringiz va qarz daftaringiz muvaffaqiyatli tahlil qili
     }
   };
 
-  return { user, initData, loading, fetchWithAuth };
+  const triggerHaptic = (action, styleOrType) => {
+    const tg = window.Telegram?.WebApp;
+    if (!tg || !tg.HapticFeedback) return;
+    try {
+      if (action === 'impact') {
+        tg.HapticFeedback.impactOccurred(styleOrType || 'light');
+      } else if (action === 'notification') {
+        tg.HapticFeedback.notificationOccurred(styleOrType || 'success');
+      } else if (action === 'selection') {
+        tg.HapticFeedback.selectionChanged();
+      }
+    } catch (e) {
+      console.warn("Haptic feedback failed:", e);
+    }
+  };
+
+  return { user, initData, loading, fetchWithAuth, triggerHaptic };
 }
