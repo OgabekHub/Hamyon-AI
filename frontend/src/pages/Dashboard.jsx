@@ -367,8 +367,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
             {displayedTxs.slice(0, 5).map(t => (
               <div
                 key={t.id}
-                className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center transition-all duration-200 hover:-translate-y-0.5 active:scale-98"
-                style={{ borderColor: 'rgba(59,158,248,0.10)' }}
+                className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center border border-[rgba(59,158,248,0.10)] transition-all duration-300 hover:border-[rgba(59,158,248,0.25)] hover:bg-[rgba(59,158,248,0.03)]"
               >
                 <div className="flex items-center gap-3">
                   {(() => {
