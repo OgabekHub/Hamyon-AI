@@ -61,7 +61,6 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
   const [amount, setAmount]         = useState('');
   const [type, setType]             = useState('owed');
   const [dueDate, setDueDate]       = useState('');
-  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
 
   const handleAddDebt = async (e) => {
     e.preventDefault();
@@ -386,10 +385,9 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
         </div>
       )}
 
-      {/* BOTTOM SHEET: Add Debt */}
       <BottomSheet
         isOpen={showAddModal}
-        onClose={() => { setShowAddModal(false); setTypeDropdownOpen(false); }}
+        onClose={() => setShowAddModal(false)}
         title="Yangi Qarz"
       >
         <form onSubmit={handleAddDebt} className="flex flex-col gap-3.5">
@@ -406,74 +404,71 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts, triggerHapti
                 style={{ color: 'var(--color-text)' }} />
             </div>
           ))}
-          <div className="relative">
-            <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider block mb-2"
               style={{ color: 'var(--color-muted)' }}>Qarz turi</label>
-            <button
-              type="button"
-              onClick={() => { setTypeDropdownOpen(!typeDropdownOpen); triggerHaptic?.('selection'); }}
-              className="w-full glass-input px-4 py-3 text-sm flex justify-between items-center text-left"
-              style={{ color: 'var(--color-text)' }}
-            >
-              {type === 'owed' ? (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.20)', color: '#10b981' }}>
-                    <ArrowDownLeft size={12} />
-                  </div>
-                  <span className="font-semibold">Menga qarz (Owed)</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.20)', color: '#f43f5e' }}>
-                    <ArrowUpRight size={12} />
-                  </div>
-                  <span className="font-semibold">Men qarzman (Owing)</span>
-                </div>
-              )}
-              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{typeDropdownOpen ? '▲' : '▼'}</span>
-            </button>
-
-            {typeDropdownOpen && (
-              <div 
-                className="absolute left-0 right-0 mt-1.5 glass rounded-2xl p-1.5 z-[60] flex flex-col gap-1 shadow-2xl animate-scale-in"
-                style={{ background: 'var(--color-bg)', borderColor: 'rgba(59,158,248,0.20)' }}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => { setType('owed'); triggerHaptic?.('selection'); }}
+                className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-xs font-bold transition-all"
+                style={
+                  type === 'owed'
+                    ? {
+                        background: 'rgba(16,185,129,0.12)',
+                        border: '2px solid #10b981',
+                        color: 'var(--color-text)',
+                        boxShadow: '0 0 12px rgba(16,185,129,0.15)'
+                      }
+                    : {
+                        background: 'var(--color-glass-bg)',
+                        border: '1px solid var(--color-glass-border)',
+                        color: 'var(--color-muted)'
+                      }
+                }
               >
-                <button
-                  type="button"
-                  onClick={() => { 
-                    setType('owed'); 
-                    setTypeDropdownOpen(false); 
-                    triggerHaptic?.('selection'); 
+                <div 
+                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ 
+                    background: type === 'owed' ? 'rgba(16,185,129,0.20)' : 'rgba(59,158,248,0.06)',
+                    color: '#10b981' 
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs flex items-center gap-2.5 text-left hover:bg-gray-500/10 transition-colors"
-                  style={{ color: 'var(--color-text)' }}
                 >
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.20)', color: '#10b981' }}>
-                    <ArrowDownLeft size={12} />
-                  </div>
-                  <span className="font-bold">Menga qarz (Owed)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { 
-                    setType('owing'); 
-                    setTypeDropdownOpen(false); 
-                    triggerHaptic?.('selection'); 
+                  <ArrowDownLeft size={12} />
+                </div>
+                <span>Menga qarz</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setType('owing'); triggerHaptic?.('selection'); }}
+                className="flex items-center justify-center gap-2 px-3 py-3 rounded-2xl text-xs font-bold transition-all"
+                style={
+                  type === 'owing'
+                    ? {
+                        background: 'rgba(244,63,94,0.10)',
+                        border: '2px solid #f43f5e',
+                        color: 'var(--color-text)',
+                        boxShadow: '0 0 12px rgba(244,63,94,0.15)'
+                      }
+                    : {
+                        background: 'var(--color-glass-bg)',
+                        border: '1px solid var(--color-glass-border)',
+                        color: 'var(--color-muted)'
+                      }
+                }
+              >
+                <div 
+                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ 
+                    background: type === 'owing' ? 'rgba(244,63,94,0.18)' : 'rgba(59,158,248,0.06)',
+                    color: '#f43f5e' 
                   }}
-                  className="w-full px-3 py-2.5 rounded-xl text-xs flex items-center gap-2.5 text-left hover:bg-gray-500/10 transition-colors"
-                  style={{ color: 'var(--color-text)' }}
                 >
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(244,63,94,0.10)', border: '1px solid rgba(244,63,94,0.20)', color: '#f43f5e' }}>
-                    <ArrowUpRight size={12} />
-                  </div>
-                  <span className="font-bold">Men qarzman (Owing)</span>
-                </button>
-              </div>
-            )}
+                  <ArrowUpRight size={12} />
+                </div>
+                <span>Men qarzman</span>
+              </button>
+            </div>
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider block mb-1.5"
