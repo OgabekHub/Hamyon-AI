@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Check, AlertCircle, Target } from 'lucide-react';
+import { 
+  Edit2, Check, AlertCircle, Target, 
+  ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
+} from 'lucide-react';
 
 const CATEGORIES = [
   { name: '🛒 Oziq-ovqat', color: '#10b981' },
@@ -10,6 +13,16 @@ const CATEGORIES = [
   { name: '💡 Kommunal',  color: '#fbbf24' },
   { name: '🎯 Boshqa',    color: '#64748b' },
 ];
+
+const CATEGORY_MAP = {
+  '🛒 Oziq-ovqat': { displayName: 'Oziq-ovqat', Icon: ShoppingCart },
+  '🚗 Transport':  { displayName: 'Transport',  Icon: Car },
+  '🍕 Restoran':   { displayName: 'Restoran',   Icon: Utensils },
+  '💊 Sog\'liq':   { displayName: 'Sog\'liq',    Icon: HeartPulse },
+  '🏠 Maishiy':    { displayName: 'Maishiy',    Icon: Home },
+  '💡 Kommunal':   { displayName: 'Kommunal',   Icon: Lightbulb },
+  '🎯 Boshqa':     { displayName: 'Boshqa',     Icon: HelpCircle },
+};
 
 export default function Budget({ fetchWithAuth, budgets, transactions, refreshBudgets }) {
   const [editingCategory, setEditingCategory] = useState(null);
@@ -75,13 +88,28 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
               >
                 {/* Row: name + edit/save button */}
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ background: color, boxShadow: `0 0 8px ${color}` }}
-                    />
-                    <span className="text-sm font-extrabold" style={{ color: 'var(--color-text)' }}>{cat}</span>
-                  </div>
+                  {(() => {
+                    const categoryInfo = CATEGORY_MAP[cat] || { displayName: cat, Icon: HelpCircle };
+                    const IconComponent = categoryInfo.Icon;
+                    return (
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 shrink-0"
+                          style={{ 
+                            background: `${color}15`, 
+                            border: `1px solid ${color}30`, 
+                            color: color,
+                            boxShadow: `0 0 10px ${color}08`,
+                          }}
+                        >
+                          <IconComponent size={14} />
+                        </div>
+                        <span className="text-sm font-extrabold" style={{ color: 'var(--color-text)' }}>
+                          {categoryInfo.displayName}
+                        </span>
+                      </div>
+                    );
+                  })()}
 
                   {!isEditing ? (
                     <button

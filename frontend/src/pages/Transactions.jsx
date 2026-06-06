@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, TrendingDown } from 'lucide-react';
+import { 
+  Search, Trash2, TrendingDown,
+  ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
+} from 'lucide-react';
 
 const CATEGORIES = [
   'Barchasi',
@@ -11,6 +14,16 @@ const CATEGORIES = [
   '💡 Kommunal',
   '🎯 Boshqa',
 ];
+
+const CATEGORY_MAP = {
+  '🛒 Oziq-ovqat': { displayName: 'Oziq-ovqat', color: '#10b981', Icon: ShoppingCart },
+  '🚗 Transport':  { displayName: 'Transport',  color: '#3b9ef8', Icon: Car },
+  '🍕 Restoran':   { displayName: 'Restoran',   color: '#f59e0b', Icon: Utensils },
+  '💊 Sog\'liq':   { displayName: 'Sog\'liq',    color: '#f43f5e', Icon: HeartPulse },
+  '🏠 Maishiy':    { displayName: 'Maishiy',    color: '#a78bfa', Icon: Home },
+  '💡 Kommunal':   { displayName: 'Kommunal',   color: '#fbbf24', Icon: Lightbulb },
+  '🎯 Boshqa':     { displayName: 'Boshqa',     color: '#64748b', Icon: HelpCircle },
+};
 
 export default function Transactions({ fetchWithAuth, transactions, refreshTransactions }) {
   const [searchQuery, setSearchQuery]         = useState('');
@@ -103,27 +116,36 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {filtered.map(t => (
-            <div
-              key={t.id}
-              className="glass rounded-2xl px-4 py-3.5 flex justify-between items-start transition-all duration-200 hover:-translate-y-0.5"
-              style={{ borderColor: 'rgba(59,158,248,0.10)' }}
-            >
-              <div className="flex items-start gap-3 flex-1 min-w-0">
-                {/* emoji badge */}
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 mt-0.5"
-                  style={{ background: 'rgba(30,99,245,0.10)', border: '1px solid rgba(59,158,248,0.15)' }}
-                >
-                  {t.category.substring(0, 2)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
-                    {t.merchant}
-                  </h4>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                    {new Date(t.date).toLocaleDateString('uz-UZ')} · {t.category.substring(3)}
-                  </p>
+          {filtered.map(t => {
+            const catInfo = CATEGORY_MAP[t.category] || { displayName: t.category, color: '#64748b', Icon: HelpCircle };
+            const IconComponent = catInfo.Icon;
+            const catColor = catInfo.color;
+            return (
+              <div
+                key={t.id}
+                className="glass rounded-2xl px-4 py-3.5 flex justify-between items-start transition-all duration-200 hover:-translate-y-0.5"
+                style={{ borderColor: 'rgba(59,158,248,0.10)' }}
+              >
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  {/* Category icon badge */}
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ 
+                      background: `${catColor}15`, 
+                      border: `1px solid ${catColor}30`,
+                      color: catColor,
+                      boxShadow: `0 0 10px ${catColor}08`
+                    }}
+                  >
+                    <IconComponent size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm truncate" style={{ color: 'var(--color-text)' }}>
+                      {t.merchant}
+                    </h4>
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                      {new Date(t.date).toLocaleDateString('uz-UZ')} · {catInfo.displayName}
+                    </p>
                   {t.sms_raw && (
                     <span
                       className="text-[9px] mt-1.5 inline-block px-2.5 py-1 rounded-lg italic leading-relaxed max-w-[200px] break-words"
@@ -158,7 +180,8 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

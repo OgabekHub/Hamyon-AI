@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { Plus, Edit2, Trash2, ArrowRight, X, TrendingDown, Wallet2 } from 'lucide-react';
+import { 
+  Plus, Edit2, Trash2, ArrowRight, X, TrendingDown, Wallet2,
+  ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
+} from 'lucide-react';
 
 const CATEGORIES = [
   { name: '🛒 Oziq-ovqat', color: '#10b981' },
@@ -11,6 +14,16 @@ const CATEGORIES = [
   { name: '💡 Kommunal',  color: '#fbbf24' },
   { name: '🎯 Boshqa',    color: '#64748b' },
 ];
+
+const CATEGORY_MAP = {
+  '🛒 Oziq-ovqat': { displayName: 'Oziq-ovqat', color: '#10b981', Icon: ShoppingCart },
+  '🚗 Transport':  { displayName: 'Transport',  color: '#3b9ef8', Icon: Car },
+  '🍕 Restoran':   { displayName: 'Restoran',   color: '#f59e0b', Icon: Utensils },
+  '💊 Sog\'liq':   { displayName: 'Sog\'liq',    color: '#f43f5e', Icon: HeartPulse },
+  '🏠 Maishiy':    { displayName: 'Maishiy',    color: '#a78bfa', Icon: Home },
+  '💡 Kommunal':   { displayName: 'Kommunal',   color: '#fbbf24', Icon: Lightbulb },
+  '🎯 Boshqa':     { displayName: 'Boshqa',     color: '#64748b', Icon: HelpCircle },
+};
 
 function fmt(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -276,18 +289,31 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
                 style={{ borderColor: 'rgba(59,158,248,0.10)' }}
               >
                 <div className="flex items-center gap-3">
-                  {/* Category emoji badge */}
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
-                    style={{ background: 'rgba(30,99,245,0.10)', border: '1px solid rgba(59,158,248,0.15)' }}>
-                    {t.category.substring(0, 2)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm truncate max-w-[140px]"
-                      style={{ color: 'var(--color-text)' }}>{t.merchant}</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
-                      {new Date(t.date).toLocaleDateString('uz-UZ')} · {t.category.substring(3)}
-                    </p>
-                  </div>
+                  {(() => {
+                    const catInfo = CATEGORY_MAP[t.category] || { displayName: t.category, color: '#64748b', Icon: HelpCircle };
+                    const IconComponent = catInfo.Icon;
+                    const catColor = catInfo.color;
+                    return (
+                      <>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ 
+                            background: `${catColor}15`, 
+                            border: `1px solid ${catColor}30`,
+                            color: catColor,
+                            boxShadow: `0 0 10px ${catColor}08`
+                          }}>
+                          <IconComponent size={18} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm truncate max-w-[140px]"
+                            style={{ color: 'var(--color-text)' }}>{t.merchant}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--color-muted)' }}>
+                            {new Date(t.date).toLocaleDateString('uz-UZ')} · {catInfo.displayName}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2.5">
                   <span className="font-extrabold text-sm" style={{ color: 'var(--color-text)' }}>
