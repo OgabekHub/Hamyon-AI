@@ -144,12 +144,14 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
 
       {/* ── HERO CARD: gradient navy→blue ── */}
       <div className="hero-card rounded-3xl p-6 mb-5 shadow-[0_12px_40px_rgba(13,27,75,0.50)]">
-        {/* Top row */}
         <div className="flex justify-between items-start mb-1 relative z-10">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200/70 block mb-1">
-              Bu oygi jami xarajat
-            </span>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Wallet2 size={12} className="text-blue-200/70" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200/70 block">
+                Bu oygi jami xarajat
+              </span>
+            </div>
             <div className="flex items-end gap-2">
               <span className="text-3xl font-black text-white tracking-tight">
                 {totalSpent.toLocaleString('uz-UZ')}
@@ -157,19 +159,14 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
               <span className="text-sm font-bold text-blue-200 mb-0.5">UZS</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl text-white/80" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }} title="Hamyon">
-              <Wallet2 size={14} className="text-white" />
-            </div>
-            <button
-              onClick={handleOpenBudgetModal}
-              className="p-2 rounded-xl transition-all duration-200 active:scale-90"
-              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
-              title="Budjetni tahrirlash"
-            >
-              <Edit2 size={14} className="text-white" />
-            </button>
-          </div>
+          <button
+            onClick={handleOpenBudgetModal}
+            className="p-2 rounded-xl transition-all duration-200 active:scale-90"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
+            title="Budjetni tahrirlash"
+          >
+            <Edit2 size={14} className="text-white" />
+          </button>
         </div>
 
         {/* Progress / Budget */}
