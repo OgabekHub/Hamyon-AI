@@ -56,7 +56,7 @@ export default function AIReport({ fetchWithAuth, insight, refreshInsight }) {
         </div>
         <button
           onClick={handleGenerate}
-          disabled={loading || generating}
+          disabled={generating}
           className="p-2.5 rounded-xl transition-all disabled:opacity-40"
           style={{
             background: 'rgba(30,99,245,0.10)',
