@@ -89,7 +89,7 @@ export default function AIReport({ fetchWithAuth, insight, refreshInsight }) {
           </p>
         </div>
 
-      ) : !insight ? (
+      ) : (!insight || !insight.insight_text) ? (
         /* Empty state */
         <div className="glass rounded-3xl p-8 py-12 text-center flex flex-col items-center gap-5"
           style={{ border: '1px dashed rgba(59,158,248,0.18)' }}>
@@ -135,7 +135,7 @@ export default function AIReport({ fetchWithAuth, insight, refreshInsight }) {
                 Hamyon AI Tahlili
               </span>
               <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>
-                {new Date(insight.generated_at).toLocaleString('uz-UZ')}
+                {insight.generated_at ? new Date(insight.generated_at).toLocaleString('uz-UZ') : ''}
               </span>
             </div>
 
