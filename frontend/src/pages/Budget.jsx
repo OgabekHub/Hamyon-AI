@@ -29,8 +29,9 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
     } catch (err) { console.error(err); }
   };
 
+  const txs             = Array.isArray(transactions) ? transactions : [];
   const currentMonthStr = new Date().toISOString().substring(0, 7);
-  const monthlyTxs = transactions.filter(t => t.date.substring(0, 7) === currentMonthStr);
+  const monthlyTxs      = txs.filter(t => t.date.substring(0, 7) === currentMonthStr);
 
   const categorySpentMap = {};
   monthlyTxs.forEach(t => {
@@ -57,7 +58,8 @@ export default function Budget({ fetchWithAuth, budgets, transactions, refreshBu
         <div className="flex flex-col gap-3.5">
           {CATEGORIES.map(({ name: cat, color }) => {
             const spent     = categorySpentMap[cat] || 0;
-            const budgetObj = budgets.find(b => b.category === cat);
+            const safeBudgets = Array.isArray(budgets) ? budgets : [];
+            const budgetObj = safeBudgets.find(b => b.category === cat);
             const limit     = budgetObj ? Number(budgetObj.limit_amount) : 0;
             const percent   = limit > 0 ? (spent / limit) * 100 : 0;
             const isEditing = editingCategory === cat;

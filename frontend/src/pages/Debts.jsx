@@ -39,8 +39,9 @@ export default function Debts({ fetchWithAuth, debts, refreshDebts }) {
     } catch (err) { console.error(err); }
   };
 
-  const unpaidDebts  = debts.filter(d => !d.is_paid);
-  const paidDebts    = debts.filter(d => d.is_paid);
+  const safeDebts    = Array.isArray(debts) ? debts : [];
+  const unpaidDebts  = safeDebts.filter(d => !d.is_paid);
+  const paidDebts    = safeDebts.filter(d => d.is_paid);
   const currentUnpaid = unpaidDebts.filter(d => d.type === activeTab);
   const currentPaid   = paidDebts.filter(d => d.type === activeTab);
   const totalOwed    = unpaidDebts.filter(d => d.type === 'owed').reduce((s, d) => s + Number(d.amount), 0);

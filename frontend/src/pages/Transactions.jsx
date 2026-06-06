@@ -24,7 +24,8 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
     } catch (err) { console.error(err); }
   };
 
-  const filtered = transactions.filter(t => {
+  const txs = Array.isArray(transactions) ? transactions : [];
+  const filtered = txs.filter(t => {
     const matchSearch = t.merchant.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.sms_raw && t.sms_raw.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchCat = selectedCategory === 'Barchasi' || t.category === selectedCategory;

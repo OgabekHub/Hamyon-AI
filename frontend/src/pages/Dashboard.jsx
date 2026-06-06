@@ -67,8 +67,9 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
   };
 
   // Calculations
+  const txs             = Array.isArray(transactions) ? transactions : [];
   const currentMonthStr = new Date().toISOString().substring(0, 7);
-  const monthlyTxs      = transactions.filter(t => t.date.substring(0, 7) === currentMonthStr);
+  const monthlyTxs      = txs.filter(t => t.date.substring(0, 7) === currentMonthStr);
   const totalSpent      = monthlyTxs.reduce((s, t) => s + Number(t.amount), 0);
   const budgetLimit     = Number(userData?.monthly_budget || 0);
   const percentSpent    = budgetLimit > 0 ? (totalSpent / budgetLimit) * 100 : 0;
@@ -256,7 +257,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
           </button>
         </div>
 
-        {transactions.length === 0 ? (
+        {txs.length === 0 ? (
           <div className="glass rounded-3xl p-10 text-center text-sm border-dashed"
             style={{
               color: 'var(--color-muted)',
@@ -268,7 +269,7 @@ export default function Dashboard({ fetchWithAuth, user, setActiveTab, transacti
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {transactions.slice(0, 5).map(t => (
+            {txs.slice(0, 5).map(t => (
               <div
                 key={t.id}
                 className="glass rounded-2xl px-4 py-3.5 flex justify-between items-center transition-all duration-200 hover:-translate-y-0.5 active:scale-98"
