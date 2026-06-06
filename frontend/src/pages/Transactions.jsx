@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Trash2, TrendingDown,
-  ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle 
+  ShoppingCart, Car, Utensils, HeartPulse, Home, Lightbulb, HelpCircle, LayoutGrid
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -16,6 +16,7 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_MAP = {
+  'Barchasi':      { displayName: 'Barchasi',   color: '#1e63f5', Icon: LayoutGrid },
   '🛒 Oziq-ovqat': { displayName: 'Oziq-ovqat', color: '#10b981', Icon: ShoppingCart },
   '🚗 Transport':  { displayName: 'Transport',  color: '#3b9ef8', Icon: Car },
   '🍕 Restoran':   { displayName: 'Restoran',   color: '#f59e0b', Icon: Utensils },
@@ -73,28 +74,42 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
 
       {/* Category chips */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className="px-4 py-2 rounded-2xl text-[11px] font-bold whitespace-nowrap transition-all duration-200 active:scale-95"
-            style={
-              selectedCategory === cat
-                ? {
-                    background: 'linear-gradient(135deg, #1e63f5 0%, #3b9ef8 100%)',
-                    color: '#ffffff',
-                    boxShadow: '0 0 14px rgba(30,99,245,0.35)',
-                  }
-                : {
-                    background: 'var(--color-glass-bg)',
-                    border: '1px solid var(--color-glass-border)',
-                    color: 'var(--color-muted)',
-                  }
-            }
-          >
-            {cat}
-          </button>
-        ))}
+        {CATEGORIES.map(cat => {
+          const isActive = selectedCategory === cat;
+          const catInfo = CATEGORY_MAP[cat] || { displayName: cat, color: '#64748b', Icon: HelpCircle };
+          const IconComponent = catInfo.Icon;
+          const catColor = catInfo.color;
+
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className="px-3.5 py-2 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-200 active:scale-95 flex items-center gap-1.5"
+              style={
+                isActive
+                  ? {
+                      background: 'linear-gradient(135deg, #1e63f5 0%, #3b9ef8 100%)',
+                      color: '#ffffff',
+                      boxShadow: '0 0 14px rgba(30,99,245,0.35)',
+                    }
+                  : {
+                      background: 'var(--color-glass-bg)',
+                      border: '1px solid var(--color-glass-border)',
+                      color: 'var(--color-muted)',
+                    }
+              }
+            >
+              <IconComponent 
+                size={12} 
+                className="transition-colors duration-200"
+                style={{
+                  color: isActive ? '#ffffff' : catColor,
+                }} 
+              />
+              {catInfo.displayName}
+            </button>
+          );
+        })}
       </div>
 
       {/* Summary bar */}
