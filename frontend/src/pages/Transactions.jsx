@@ -134,6 +134,7 @@ export default function Transactions({ fetchWithAuth, transactions, refreshTrans
                 isActive
                   ? {
                       background: 'linear-gradient(135deg, #1e63f5 0%, #3b9ef8 100%)',
+                      border: '1px solid transparent',
                       color: '#ffffff',
                       boxShadow: '0 0 14px rgba(30,99,245,0.35)',
                     }
