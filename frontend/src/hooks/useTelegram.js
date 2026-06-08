@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 export function useTelegram() {
   const [user, setUser] = useState(null);
@@ -78,7 +79,25 @@ export function useTelegram() {
         throw new Error(errData.error || `Tarmoq xatosi: ${res.status}`);
       }
 
-      return await res.json();
+      const data = await res.json();
+
+      // Keshni oflayn rejim uchun saqlash (GET so'rovlari uchun)
+      if (options.method === 'GET' || !options.method) {
+        const urlPath = endpoint.split('?')[0];
+        if (urlPath === '/api/auth') {
+          setLocalStorageData('hamyon_user_profile', data);
+        } else if (urlPath === '/api/transactions') {
+          setLocalStorageData('hamyon_transactions', data);
+        } else if (urlPath === '/api/budgets') {
+          setLocalStorageData('hamyon_budgets', data);
+        } else if (urlPath === '/api/debts') {
+          setLocalStorageData('hamyon_debts', data);
+        } else if (urlPath === '/api/insights') {
+          setLocalStorageData('hamyon_ai_insight', data);
+        }
+      }
+
+      return data;
     } catch (error) {
       console.warn(`Backend ulanishida xatolik yuz berdi (${error.message}). Oflayn rejim (LocalStorage) faollashtirildi.`);
       
@@ -87,11 +106,17 @@ export function useTelegram() {
 
       // 1. Auth / Profil
       if (urlPath === '/api/auth') {
-        const localProfile = getLocalStorageData('hamyon_user_profile', {
+        const localProfile = getLocalStorageData('hamyon_user_profile', isDev ? {
           id: 'dev-user-uuid-1234',
           telegram_id: user?.id || 123456789,
           name: user?.name || 'Jasur',
           monthly_budget: 5000000,
+          currency: 'UZS'
+        } : {
+          id: 'prod-user',
+          telegram_id: user?.id || 0,
+          name: user?.name || 'Foydalanuvchi',
+          monthly_budget: 0,
           currency: 'UZS'
         });
         return localProfile;
@@ -100,11 +125,17 @@ export function useTelegram() {
       // 2. Oylik Budjetni yangilash
       if (urlPath === '/api/user/budget' && options.method === 'POST') {
         const { monthly_budget } = JSON.parse(options.body);
-        const profile = getLocalStorageData('hamyon_user_profile', {
+        const profile = getLocalStorageData('hamyon_user_profile', isDev ? {
           id: 'dev-user-uuid-1234',
           telegram_id: user?.id || 123456789,
           name: user?.name || 'Jasur',
           monthly_budget: 5000000,
+          currency: 'UZS'
+        } : {
+          id: 'prod-user',
+          telegram_id: user?.id || 0,
+          name: user?.name || 'Foydalanuvchi',
+          monthly_budget: 0,
           currency: 'UZS'
         });
         profile.monthly_budget = Number(monthly_budget);
@@ -114,13 +145,13 @@ export function useTelegram() {
 
       // 3. Tranzaksiyalar
       if (urlPath === '/api/transactions') {
-        let transactions = getLocalStorageData('hamyon_transactions', [
+        let transactions = getLocalStorageData('hamyon_transactions', isDev ? [
           { id: '1', user_id: 'dev-user-uuid-1234', amount: 2000000, merchant: 'Korzinka Supermarket', category: '🛒 Oziq-ovqat', date: new Date(Date.now() - 172800000).toISOString() },
           { id: '2', user_id: 'dev-user-uuid-1234', amount: 1250000, merchant: 'Evos Olay', category: '🍕 Restoran', date: new Date(Date.now() - 86400000).toISOString() },
           { id: '3', user_id: 'dev-user-uuid-1234', amount: 620000, merchant: 'Bolt Taxi', category: '🚗 Transport', date: new Date().toISOString() },
           { id: '4', user_id: 'dev-user-uuid-1234', amount: 500000, merchant: 'Texnomart (Mebel)', category: '🏠 Maishiy', date: new Date(Date.now() - 259200000).toISOString() },
           { id: '5', user_id: 'dev-user-uuid-1234', amount: 250000, merchant: 'Click (Svet to\'lovi)', category: '💡 Kommunal', date: new Date(Date.now() - 345600000).toISOString() }
-        ]);
+        ] : []);
 
         if (options.method === 'POST') {
           const newTx = JSON.parse(options.body);
@@ -152,11 +183,11 @@ export function useTelegram() {
       // 4. Budjet chegaralari
       if (urlPath === '/api/budgets') {
         const currentMonth = new Date().toISOString().substring(0, 7);
-        let budgets = getLocalStorageData('hamyon_budgets', [
+        let budgets = getLocalStorageData('hamyon_budgets', isDev ? [
           { id: 'b1', user_id: 'dev-user-uuid-1234', category: '🚗 Transport', limit_amount: 500000, month: currentMonth },
           { id: 'b2', user_id: 'dev-user-uuid-1234', category: '🛒 Oziq-ovqat', limit_amount: 2000000, month: currentMonth },
           { id: 'b3', user_id: 'dev-user-uuid-1234', category: '🍕 Restoran', limit_amount: 1000000, month: currentMonth }
-        ]);
+        ] : []);
 
         if (options.method === 'POST') {
           const newBudget = JSON.parse(options.body);
@@ -181,10 +212,10 @@ export function useTelegram() {
 
       // 5. Qarzlar
       if (urlPath === '/api/debts') {
-        let debts = getLocalStorageData('hamyon_debts', [
+        let debts = getLocalStorageData('hamyon_debts', isDev ? [
           { id: 'd1', user_id: 'dev-user-uuid-1234', person_name: 'Davron (akasi)', amount: 400000, type: 'owing', is_paid: false, created_at: new Date().toISOString() },
           { id: 'd2', user_id: 'dev-user-uuid-1234', person_name: 'Sardor (do\'sti)', amount: 300000, type: 'owed', is_paid: false, created_at: new Date().toISOString() }
-        ]);
+        ] : []);
 
         if (options.method === 'POST') {
           const newDebt = JSON.parse(options.body);
@@ -231,25 +262,17 @@ export function useTelegram() {
 
       // 6. AI Insights
       if (urlPath === '/api/insights') {
-        return getLocalStorageData('hamyon_ai_insight', {
+        return getLocalStorageData('hamyon_ai_insight', isDev ? {
           id: 'i1',
           user_id: 'dev-user-uuid-1234',
-          insight_text: `🤖 **Hamyon AI Tahlili:**
-    
-Assalomu alaykum, Jasur! Moliya holatingizni tahlil qildim:
-
-🚗 **Transport:** Bu oy taksi (Bolt) uchun jami **620,000 UZS** sarfladingiz. Bu siz belgilagan 500,000 UZS limitdan **24% (120,000 UZS) ko'p**! Kelgusi haftalarda jamoat transportidan foydalanishni tavsiya qilaman.
-
-🛒 **Oziq-ovqat:** Korzinkada 2,000,000 UZS sarflandi. Haftalik xaridlarni Chorsu bozoridan ulgurji narxlarda qilish orqali yana 300,000 UZS tejashingiz mumkin.
-
-💡 **O'zbekona maslahat:** Yaqin oylarda yurtimizda to'ylar mavsumi qizg'in pallaga kiradi. To'y va to'yonalar uchun hozirdan oylik daromadingizdan kamida 500,000 UZS jamg'arib borishni boshlang.`,
+          insight_text: `🤖 **Hamyon AI Tahlili:**\n\nAssalomu alaykum, Jasur! Moliya holatingizni tahlil qildim:\n\n🚗 **Transport:** Bu oy taksi (Bolt) uchun jami **620,000 UZS** sarfladingiz. Bu siz belgilagan 500,000 UZS limitdan **24% (120,000 UZS) ko'p**! Kelgusi haftalarda jamoat transportidan foydalanishni tavsiya qilaman.\n\n🛒 **Oziq-ovqat:** Korzinkada 2,000,000 UZS sarflandi. Haftalik xaridlarni Chorsu bozoridan ulgurji narxlarda qilish orqali yana 300,000 UZS tejashingiz mumkin.\n\n💡 **O'zbekona maslahat:** Yaqin oylarda yurtimizda to'ylar mavsumi qizg'in pallaga kiradi. To'y va to'yonalar uchun hozirdan oylik daromadingizdan kamida 500,000 UZS jamg'arib borishni boshlang.`,
           generated_at: new Date().toISOString()
-        });
+        } : null);
       }
 
       // AI insight generatsiya qilish
       if (urlPath === '/api/insights/generate' && options.method === 'POST') {
-        const profile = getLocalStorageData('hamyon_user_profile', { monthly_budget: 5000000 });
+        const profile = getLocalStorageData('hamyon_user_profile', { monthly_budget: isDev ? 5000000 : 0 });
         const transactions = getLocalStorageData('hamyon_transactions', []);
         const debts = getLocalStorageData('hamyon_debts', []);
         
@@ -258,15 +281,7 @@ Assalomu alaykum, Jasur! Moliya holatingizni tahlil qildim:
         const owedToMe = unpaidDebts.filter(d => d.type === 'owed').reduce((sum, d) => sum + Number(d.amount), 0);
         const owingToOthers = unpaidDebts.filter(d => d.type === 'owing').reduce((sum, d) => sum + Number(d.amount), 0);
 
-        const newInsightText = `🤖 **Hamyon AI Tahlili (Yangilandi):**
-    
-Assalomu alaykum! Xarajatlaringiz va qarz daftaringiz muvaffaqiyatli tahlil qilindi:
-
-📉 **Umumiy xarajat:** Joriy oyda jami **${totalSpent.toLocaleString('uz-UZ')} UZS** sarfladingiz. Oylik budjetingiz **${profile.monthly_budget.toLocaleString('uz-UZ')} UZS** ni tashkil etadi.
-
-📓 **Qarzlar:** Boshqalardan **${owingToOthers.toLocaleString('uz-UZ')} UZS** qarzingiz bor va sizdan **${owedToMe.toLocaleString('uz-UZ')} UZS** qarz bo'lgan do'stlaringiz bor.
-
-💡 **O'zbekona tavsiya:** Haftalik rejalashtirish orqali ortiqcha taksi va kafe xarajatlarini 15% gacha qisqartira olasiz. Ramazon oyi arafasida yoki bayramlarda bozor-o'charni oldindan rejalashtiring!`;
+        const newInsightText = `🤖 **Hamyon AI Tahlili (Yangilandi):**\n\nAssalomu alaykum! Xarajatlaringiz va qarz daftaringiz muvaffaqiyatli tahlil qilindi:\n\n📉 **Umumiy xarajat:** Joriy oyda jami **${totalSpent.toLocaleString('uz-UZ')} UZS** sarfladingiz. Oylik budjetingiz **${profile.monthly_budget.toLocaleString('uz-UZ')} UZS** ni tashkil etadi.\n\n📓 **Qarzlar:** Boshqalardan **${owingToOthers.toLocaleString('uz-UZ')} UZS** qarzingiz bor va sizdan **${owedToMe.toLocaleString('uz-UZ')} UZS** qarz bo'lgan do'stlaringiz bor.\n\n💡 **O'zbekona tavsiya:** Haftalik rejalashtirish orqali ortiqcha taksi va kafe xarajatlarini 15% gacha qisqartira olasiz. Ramazon oyi arafasida yoki bayramlarda bozor-o'charni oldindan rejalashtiring!`;
 
         const newInsight = {
           id: Math.random().toString(36).substring(2, 11),
